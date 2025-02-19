@@ -1,0 +1,12 @@
+name: espd_mantid
+channels:
+  - mantid
+  - conda-forge
+dependencies:
+  - cyclopts=3.4
+  - mantid=6.11.0
+  - matplotlib=3.7
+  - python=3.10
+  - plotly==6.0.0
+  - panel==1.6.0
+  - watchfiles

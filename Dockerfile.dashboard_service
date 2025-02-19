@@ -1,0 +1,13 @@
+# python slim image 
+FROM python:3.10-slim
+
+WORKDIR /usr/src/dashboard_service
+COPY environment.yaml ./environment.yaml
+COPY dashboard_service.py ./dashboard_service.py
+
+RUN python -m pip install intersect-sdk[amqp]
+
+EXPOSE 10043
+
+ENTRYPOINT ["python", "dashboard_service.py"]
+
