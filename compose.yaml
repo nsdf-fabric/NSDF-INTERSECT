@@ -48,6 +48,7 @@ services:
       timeout: 10s
     volumes:
       - intersect_shared_data:/usr/src/dashboard/bragg_data/
+      - intersect_transition_data:/usr/src/dashboard/transition_data/
   dashboard_service:
     image: "intersect-service:latest"
     ports:
@@ -57,5 +58,7 @@ services:
         condition: service_healthy
     volumes:
       - intersect_shared_data:/usr/src/dashboard_service/bragg_data/
+      - intersect_transition_data:/usr/src/dashboard_service/transition_data/
 volumes:
   intersect_shared_data:
+  intersect_transition_data:

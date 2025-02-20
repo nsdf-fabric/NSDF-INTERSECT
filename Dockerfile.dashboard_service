@@ -4,8 +4,10 @@ FROM python:3.10-slim
 WORKDIR /usr/src/dashboard_service
 COPY environment.yaml ./environment.yaml
 COPY dashboard_service.py ./dashboard_service.py
+COPY config.yaml ./config.yaml
 
 RUN python -m pip install intersect-sdk[amqp]
+RUN python -m pip install pyyaml
 
 EXPOSE 10043
 

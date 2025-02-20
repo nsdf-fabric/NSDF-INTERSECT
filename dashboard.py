@@ -4,9 +4,11 @@ import panel as pn
 from load_gsas import load_gsas
 import plotly.graph_objects as go
 from datetime import datetime
+import numpy as np
 
 MAX_BANKS = 6
 BRAGG_DIR = "./bragg_data/"
+TRANSITION_DATA_DIR = "./transition_data"
 DELAY = 10
 
 
@@ -14,7 +16,8 @@ class AppState:
     def __init__(self):
         # data
         self.files = self.load_files()
-        self.current_file = ""
+        self.current_bragg_file = ""
+        self.current_transition_file = ""
         self.wksp = None
         self.wksp_title = ""
         self.name = "No file"
@@ -42,6 +45,14 @@ class AppState:
             )
             for i in range(MAX_BANKS)
         ]
+        self.transition_data_dict = dict(
+            data=[],
+            layout=go.Layout(
+                title="Transition Plot",
+                xaxis=dict(title="Temperature"),
+                yaxis=dict(title="d-Spacing"),
+            ),
+        )
 
         # plots/widgets
         self.bragg_data_plot = pn.pane.Plotly(
@@ -51,6 +62,10 @@ class AppState:
         self.bragg_data_by_bank_plots: List[pn.pane.Plotly] = [
             pn.pane.Plotly(self.bragg_data_by_bank_dict[i]) for i in range(MAX_BANKS)
         ]
+        self.transition_plot = pn.pane.Plotly(
+            self.transition_data_dict, sizing_mode="stretch_both"
+        )
+
         self.select_file = pn.widgets.AutocompleteInput(
             name="gsa file",
             restrict=True,
@@ -94,6 +109,41 @@ class AppState:
         self.name = self.wksp.name()
         self.wksp_title = self.wksp.getTitle()
         self.nEvents = self.wksp.getNEvents()
+
+    def render_transition_content(self, filename):
+        temp, peak1, peak2 = [], [], []
+        traces = []
+        with open(os.path.join(TRANSITION_DATA_DIR, filename)) as f:
+            for line in f:
+                data_tuple = line.strip().split(",")
+                temp.append(float(data_tuple[0]))
+                peak1.append(float(data_tuple[1]))
+                peak2.append(float(data_tuple[2]))
+        # peak 1
+        traces.append(
+            go.Scatter(
+                mode="lines+markers",
+                x=temp,
+                y=peak1,
+                name="peak X = 4.15",
+                marker=dict(size=np.linspace(5, 35, len(temp))),
+                line=dict(width=1),
+            )
+        )
+        # peak 2
+        traces.append(
+            go.Scatter(
+                mode="lines+markers",
+                x=temp,
+                y=peak2,
+                name="peak X = 4.6",
+                marker=dict(size=np.linspace(5, 35, len(temp))),
+                line=dict(width=1),
+            )
+        )
+        # patching transition plot
+        self.transition_data_dict["data"] = traces
+        self.transition_plot.object = self.transition_data_dict
 
     def render_sidebar_content(self):
         self.wkspinfo_md.object = f"""
@@ -207,7 +257,7 @@ class AppState:
         self.xlim_slider.value = self.maxX
         self.ylim_slider.value = self.maxY
 
-    def update_layout(self, name):
+    def update_main_layout(self, name):
         self.load_workspace(name)
         self.render_sidebar_content()
         self.render_main_content()
@@ -216,19 +266,31 @@ class AppState:
         # pull data from remote storage and display on a separate tab
         pass
 
-    # lifecycle
+    # LIFECYCLE METHODS
     def check_new_bragg_files(self):
         files = os.listdir(BRAGG_DIR)
         if files:
             files = sorted(files, key=lambda f: int(f.split("_")[0]))
             if len(files) > 1:
                 os.remove(os.path.join(BRAGG_DIR, files[0]))
-                self.current_file = files[1]
-                self.update_layout(files[1])
+                self.current_bragg_file = files[1]
+                self.update_main_layout(files[1])
             else:
-                if files[0] != self.current_file:
-                    self.current_file = files[0]
-                    self.update_layout(files[0])
+                if files[0] != self.current_bragg_file:
+                    self.current_bragg_file = files[0]
+                    self.update_main_layout(files[0])
+
+    def check_new_transition_files(self):
+        files = os.listdir(TRANSITION_DATA_DIR)
+        if files:
+            files = sorted(files, key=lambda f: int(f.split("_")[0]))
+            if len(files) > 1:
+                os.remove(os.path.join(TRANSITION_DATA_DIR, files[0]))
+                self.current_transition_file[-1]
+            else:
+                if files[-1] != self.current_transition_file:
+                    self.current_transition_file = files[-1]
+                    self.render_transition_content(files[-1])
 
 
 def main():
@@ -245,11 +307,16 @@ def main():
         pn.GridBox(*app_state.bragg_data_by_bank_plots, ncols=3),
     )
 
+    transition_plot_tab = pn.Column(
+        app_state.all_banks_header_md, app_state.transition_plot
+    )
+
     information_tab = pn.Row(app_state.wkspinfo_md)
 
     main = pn.Tabs(
         ("Bragg Data", all_banks_tab),
         ("By Bank", by_bank_tab),
+        ("Transition Plot", transition_plot_tab),
         ("Information", information_tab),
     )
     sidebar = pn.Column(
@@ -278,6 +345,9 @@ def main():
     # Listen to changes in directory with period = DELAY secs
     pn.state.add_periodic_callback(
         callback=app_state.check_new_bragg_files, period=DELAY * 1000
+    )
+    pn.state.add_periodic_callback(
+        callback=app_state.check_new_transition_files, period=DELAY * 1000
     )
 
     template.servable()
