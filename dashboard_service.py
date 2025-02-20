@@ -2,7 +2,7 @@ import logging
 import os
 import base64
 import time
-from typing import List
+from typing import List, Tuple
 import yaml
 
 from intersect_sdk import (
@@ -30,6 +30,11 @@ class FileType(BaseModel):
     file: SerializedBase64
 
 
+class TransitionFile(BaseModel):
+    filename: str
+    data: List[Tuple[float, float, float]]
+
+
 class DashboardCapability(IntersectBaseCapabilityImplementation):
     """DashboardCapability"""
 
@@ -52,17 +57,20 @@ class DashboardCapability(IntersectBaseCapabilityImplementation):
             bytes_data = base64.decodebytes(bragg_file.file)
             f.write(bytes_data)
 
-    def get_transition_data(self, transition_data: List) -> None:
+    @intersect_message()
+    def get_transition_data(self, transition_file: TransitionFile) -> None:
         """get_transtion_data
         Endpoint to return the entire transition data and write it to disk"""
         timestamp = int(time.time())
-        path = os.path.join("./transition_data", f"{timestamp}_transition_data.txt")
-        os.makedirs("./transition_data", exist_ok=True)
+        path = os.path.join(
+            "./transition_data", f"{timestamp}_{transition_file.filename}"
+        )
+        os.makedirs(os.path.dirname(path), exist_ok=True)
 
         with open(path, "w") as f:
-            for data_tuple in transition_data:
+            for data_tuple in transition_file.data:
                 temp, peak1, peak2 = data_tuple
-                f.write(f"{temp},{peak1},{peak2}")
+                f.write(f"{temp},{peak1},{peak2}\n")
 
 
 def dashboard_service():
