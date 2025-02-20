@@ -1,0 +1,5 @@
+brokers:
+  - username: "intersect_username"
+    password: "intersect_password"
+    port: 1883
+    protocol: "mqtt3.1.1"
