@@ -75,7 +75,9 @@ python realtime_client.py
 
 ## 📦 Running all services
 
-To run all the services, you can use the `compose.yaml` file from the `intersect-dashboard` and `intersect-service` images previously created.
+Prerequisites: make sure to build the [intersect-dashboard](https://github.com/nsdf-fabric/NSDF-INTERSECT?tab=readme-ov-file#building-the-image) image and the [intersect-service](https://github.com/nsdf-fabric/NSDF-INTERSECT?tab=readme-ov-file#building-the-image-1) image.
+
+To run all the services, you can use the `compose.yaml` file to run the broker, the dashboard, and the service.
 
 ```bash
 docker compose up -d
