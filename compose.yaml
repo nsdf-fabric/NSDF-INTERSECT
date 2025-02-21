@@ -14,6 +14,7 @@ services:
       RABBITMQ_USERNAME: "intersect_username"
       RABBITMQ_PASSWORD: "intersect_password"
       RABBITMQ_MANAGEMENT_ALLOW_WEB_ACCESS: "yes"
+      RABBITMQ_DISK_FREE_ABSOLUTE_LIMIT: 6Gi
     healthcheck:
       test: rabbitmq-diagnostics -q ping && rabbitmq-diagnostics -q check_running && rabbitmq-diagnostics -q check_local_alarms
       interval: 10s
