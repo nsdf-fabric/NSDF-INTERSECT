@@ -1,5 +1,6 @@
 import base64
 import logging
+import yaml
 
 from intersect_sdk import (
     INTERSECT_JSON_VALUE,
@@ -14,6 +15,8 @@ from dashboard_service import FileType
 
 logging.basicConfig(level=logging.INFO)
 
+CONFIG_CLIENT = "config_client.yaml"
+
 
 def simple_client_callback(
     _source: str, _operation: str, _has_error: bool, payload: INTERSECT_JSON_VALUE
@@ -24,16 +27,9 @@ def simple_client_callback(
 
 
 if __name__ == "__main__":
-    from_config_file = {
-        "brokers": [
-            {
-                "username": "intersect_username",
-                "password": "intersect_password",
-                "port": 1883,
-                "protocol": "mqtt3.1.1",
-            },
-        ],
-    }
+    from_config_file = {}
+    with open(CONFIG_CLIENT) as f:
+        from_config_file = yaml.safe_load(f)
 
     file_bytes = ""
     with open("./GSAS/NOM168361tof.gsa", "rb") as f:

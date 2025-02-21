@@ -20,7 +20,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-CONFIG_FILE = "config.yaml"
+CONFIG_SERVICE = "config_service.yaml"
 
 SerializedBase64 = Annotated[bytes, Field(json_schema_extra={"format": "base64"})]
 
@@ -79,7 +79,7 @@ def dashboard_service():
     Initializes service to query data for the dashboard (get_bragg_data, get_next_temperature, get_transition_data)
     """
     from_config_file = {}
-    with open(CONFIG_FILE) as f:
+    with open(CONFIG_SERVICE) as f:
         from_config_file = yaml.safe_load(f)
 
     config = IntersectServiceConfig(
