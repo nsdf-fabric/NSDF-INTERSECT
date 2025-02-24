@@ -49,7 +49,7 @@ class AppState:
             data=[],
             layout=go.Layout(
                 title="Transition Plot",
-                xaxis=dict(title="Temperature"),
+                xaxis=dict(title="Temperature (K)"),
                 yaxis=dict(title="d-Spacing"),
             ),
         )
