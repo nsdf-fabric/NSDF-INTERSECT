@@ -2,6 +2,7 @@ import base64
 import logging
 import time
 import os
+import yaml
 
 from intersect_sdk import (
     INTERSECT_JSON_VALUE,
@@ -52,6 +53,9 @@ transition_data = [
     (199.83, 1.4254984254522678, 0.17142383895130625),
     (200.00, 1.426667976082179, 0.16991445836095545),
 ]
+
+
+CONFIG_CLIENT = "config_client.yaml"
 
 
 class SampleOrchestrator:
@@ -107,16 +111,9 @@ class SampleOrchestrator:
 
 
 if __name__ == "__main__":
-    from_config_file = {
-        "brokers": [
-            {
-                "username": "intersect_username",
-                "password": "intersect_password",
-                "port": 1883,
-                "protocol": "mqtt3.1.1",
-            },
-        ],
-    }
+    from_config_file = {}
+    with open(CONFIG_CLIENT) as f:
+        from_config_file = yaml.safe_load(f)
 
     file_bytes = ""
     with open(f"./GSAS/NOM168361tof.gsa", "rb") as f:
