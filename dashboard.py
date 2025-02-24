@@ -9,7 +9,7 @@ import numpy as np
 MAX_BANKS = 6
 BRAGG_DIR = "./bragg_data/"
 TRANSITION_DATA_DIR = "./transition_data"
-DELAY = 10
+DELAY = 2
 
 
 class AppState:
