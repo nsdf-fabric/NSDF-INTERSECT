@@ -13,7 +13,7 @@ from intersect_sdk import (
     default_intersect_lifecycle_loop,
 )
 
-from dashboard_service import FileType, TransitionFile
+from dashboard_service import FileType, TransitionFile, NextTemperature
 
 logging.basicConfig(level=logging.INFO)
 
@@ -62,6 +62,7 @@ class SampleOrchestrator:
     def __init__(self) -> None:
         """ "Load all gsa files to simulate a stream of data coming in"""
         self.message_stack = []
+        # transition data
         self.message_stack.append(
             (
                 IntersectDirectMessageParams(
@@ -74,6 +75,18 @@ class SampleOrchestrator:
                 2.0,
             )
         )
+        # next temperature data
+        self.message_stack.append(
+            (
+                IntersectDirectMessageParams(
+                    destination="nsdf-organization.nsdf-facility.nsdf-system.nsdf-subsystem.nsdf-dashboard-service",
+                    operation="NSDFDashboard.get_next_temperature",
+                    payload=NextTemperature(data=225.0),
+                ),
+                1.0,
+            )
+        )
+        # bragg data
         with open("./short_list_of_data.txt") as f:
             for line in f:
                 filepath = line.strip()

@@ -35,6 +35,10 @@ class TransitionFile(BaseModel):
     data: List[Tuple[float, float, float]]
 
 
+class NextTemperature(BaseModel):
+    data: float
+
+
 class DashboardCapability(IntersectBaseCapabilityImplementation):
     """DashboardCapability"""
 
@@ -71,6 +75,18 @@ class DashboardCapability(IntersectBaseCapabilityImplementation):
             for data_tuple in transition_file.data:
                 temp, peak1, peak2 = data_tuple
                 f.write(f"{temp},{peak1},{peak2}\n")
+
+    @intersect_message()
+    def get_next_temperature(self, next_temperature: NextTemperature) -> None:
+        """get_next_temperature
+        Endpoint to return the ANDiE next temperature
+        """
+        timestamp = int(time.time())
+        path = os.path.join("./next_temperature_data", f"{timestamp}_ANDiE.txt")
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+
+        with open(path, "w") as f:
+            f.write(f"{next_temperature.data}")
 
 
 def dashboard_service():

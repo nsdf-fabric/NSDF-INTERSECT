@@ -7,8 +7,9 @@ from datetime import datetime
 import numpy as np
 
 MAX_BANKS = 6
-BRAGG_DIR = "./bragg_data/"
+BRAGG_DIR = "./bragg_data"
 TRANSITION_DATA_DIR = "./transition_data"
+NEXT_TEMPERATURE_DIR = "./next_temperature_data"
 DELAY = 2
 
 
@@ -18,12 +19,13 @@ class AppState:
         self.files = self.load_files()
         self.current_bragg_file = ""
         self.current_transition_file = ""
+        self.current_next_temperature_file = ""
         self.wksp = None
         self.wksp_title = ""
         self.name = "No file"
         self.nEvents = 0
         self.lastUpdate = datetime.now().strftime("%A, %B %d, %Y %I:%M:%S %p UTC")
-        self.next_temperature = "200.0 K"
+        self.next_temperature = 0.00
         self.minX = 0.0
         self.minY = 0.0
         self.maxX = 0.0
@@ -195,7 +197,7 @@ class AppState:
             </div>        
             <div style="border: 4px solid #FBC02D;  padding: 8px; background-color: #FFF9C4; display: inline-block; 
                 border-radius: 15px; font-size: 18px; font-family: Arial, sans-serif;">
-            <strong>ANDiE Next Temperature:</strong> {self.next_temperature}
+            <strong>ANDiE Next Temperature:</strong> {self.next_temperature} K
             </div>        
             """
 
@@ -292,6 +294,23 @@ class AppState:
                     self.current_transition_file = files[-1]
                     self.render_transition_content(files[-1])
 
+    def check_new_next_temperature_files(self):
+        files = os.listdir(NEXT_TEMPERATURE_DIR)
+        if files:
+            files = sorted(files, key=lambda f: int(f.split("_")[0]))
+            if files[-1] != self.current_next_temperature_file:
+                self.current_next_temperature_file = files[-1]
+                with open(os.path.join(NEXT_TEMPERATURE_DIR, files[-1]), "r") as f:
+                    for line in f:
+                        temp = float(line.strip())
+                        self.next_temperature = temp
+
+            if len(files) > 1:
+                for i in range(len(files) - 1):
+                    filepath = os.path.join(NEXT_TEMPERATURE_DIR, files[i])
+                    if os.path.exists(filepath):
+                        os.remove(filepath)
+
 
 def main():
     pn.extension("plotly")
@@ -348,6 +367,10 @@ def main():
     )
     pn.state.add_periodic_callback(
         callback=app_state.check_new_transition_files, period=DELAY * 1000
+    )
+
+    pn.state.add_periodic_callback(
+        callback=app_state.check_new_next_temperature_files, period=DELAY * 1000
     )
 
     template.servable()
