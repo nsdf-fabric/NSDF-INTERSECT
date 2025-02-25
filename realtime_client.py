@@ -90,7 +90,7 @@ class SampleOrchestrator:
                                 operation="NSDFDashboard.get_bragg_data",
                                 payload=msg,
                             ),
-                            5.0,
+                            2.0,
                         )
                     )
         self.message_stack.reverse()
