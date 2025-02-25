@@ -2,13 +2,26 @@
 
 This repository hosts the dashboard, dashboard service, and test clients for the [NOMAD experiment Fe2O3](https://docs.google.com/document/d/1wsDgHqE7Mg6-hM07lKuhoV7-m2mvKDEZ/edit).
 
+#### Table of Contents
+
+- [Dashboard](#-dashboard)
+  - [Building dashboard image](#building-the-dashboard-image)
+  - [Running the dashboard container](#running-the-dashboard-container)
+- [Dashboard Service](#-dashboard-service)
+  - [Building dashboard service image](#building-the-dashboard-service-image)
+  - [Running the dashboard service container](#running-the-dashboard-service-container)
+- [Testing Clients](#-testing-with-the-client)
+  - [Single file client](#dashboard_clientpy)
+  - [Real-time client](#realtime_clientpy)
+- [Running all services](#-running-all-services)
+
 ## 📈 Dashboard
 
 The dashboard is the visualization component for monitoring the experiment in real-time.
 
 ### 🐳 Docker
 
-#### Building the image
+#### Building the dashboard image
 
 To build the Docker image for the dashboard, run the following:
 
@@ -16,7 +29,7 @@ To build the Docker image for the dashboard, run the following:
 docker build --platform linux/amd64 -t intersect-dashboard -f Dockerfile.dashboard .
 ```
 
-#### Running the container
+#### Running the dashboard container
 
 To run the Docker container for the dashboard, execute the following:
 
@@ -31,7 +44,7 @@ The service will include three endpoints to serve the dashboard component: `get_
 
 ### 🐳 Docker
 
-#### Building the image
+#### Building the dashboard service image
 
 To build the Docker image for the service, run the following:
 
@@ -39,7 +52,7 @@ To build the Docker image for the service, run the following:
 docker build -t intersect-service -f Dockerfile.dashboard_service .
 ```
 
-#### Running the container
+#### Running the dashboard service container
 
 To run the Docker container for the service, execute the following:
 
@@ -75,7 +88,7 @@ python realtime_client.py
 
 ## 📦 Running all services
 
-Prerequisites: make sure to build the [intersect-dashboard](https://github.com/nsdf-fabric/NSDF-INTERSECT?tab=readme-ov-file#building-the-image) image and the [intersect-service](https://github.com/nsdf-fabric/NSDF-INTERSECT?tab=readme-ov-file#building-the-image-1) image.
+Prerequisites: make sure to build the [intersect-dashboard](#building-the-dashboard-image) image and the [intersect-service](#building-the-dashboard-service-image) image.
 
 To run all the services, you can use the `compose.yaml` file to run the broker, the dashboard, and the service.
 
