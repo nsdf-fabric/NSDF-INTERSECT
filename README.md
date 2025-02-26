@@ -90,14 +90,14 @@ python realtime_client.py
 
 Prerequisites: make sure to build the [intersect-dashboard](#building-the-dashboard-image) image and the [intersect-service](#building-the-dashboard-service-image) image.
 
-To run all the services, you can use the `compose.yaml` file to run the broker, the dashboard, and the service.
+To run all the services, you can use the `compose_local.yaml` file to run the broker, the dashboard, and the service.
 
 ```bash
-docker compose up -d
+docker compose -f compose_local.yaml up -d
 ```
 
 To stop and clean up the services.
 
 ```bash
-docker compose down
+docker compose -f compose_local.yaml down
 ```
