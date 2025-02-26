@@ -101,3 +101,32 @@ To stop and clean up the services.
 ```bash
 docker compose -f compose_local.yaml down
 ```
+
+## Running with pre-built images
+
+If you would like to get the images from the github registry, you can follow these steps:
+
+1. If you are not logged into the ghcr, login into github registry with the following command:
+
+```bash
+docker login ghcr.io -u <your-gh-username> -p <your-pat>
+```
+
+2. Pull the pre-built dashboard and dasboard service image
+
+```bash
+docker pull ghcr.io/nsdf-fabric/intersect-dashboard:latest
+docker pull ghcr.io/nsdf-fabric/intersect-service:latest
+```
+
+3. Run all services with `compose.yaml`
+
+```bash
+docker compose up -d
+```
+
+To stop and clean up the services.
+
+```bash
+docker compose down
+```
