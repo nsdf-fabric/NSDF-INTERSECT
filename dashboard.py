@@ -273,26 +273,29 @@ class AppState:
         files = os.listdir(BRAGG_DIR)
         if files:
             files = sorted(files, key=lambda f: int(f.split("_")[0]))
+            if files[-1] != self.current_bragg_file:
+                self.current_bragg_file = files[-1]
+                self.update_main_layout(files[-1])
+
             if len(files) > 1:
-                os.remove(os.path.join(BRAGG_DIR, files[0]))
-                self.current_bragg_file = files[1]
-                self.update_main_layout(files[1])
-            else:
-                if files[0] != self.current_bragg_file:
-                    self.current_bragg_file = files[0]
-                    self.update_main_layout(files[0])
+                for i in range(len(files) - 1):
+                    filepath = os.path.join(BRAGG_DIR, files[i])
+                    if os.path.exists(filepath):
+                        os.remove(filepath)
 
     def check_new_transition_files(self):
         files = os.listdir(TRANSITION_DATA_DIR)
         if files:
             files = sorted(files, key=lambda f: int(f.split("_")[0]))
-            if len(files) > 1:
-                os.remove(os.path.join(TRANSITION_DATA_DIR, files[0]))
+            if files[-1] != self.current_transition_file:
                 self.current_transition_file[-1]
-            else:
-                if files[-1] != self.current_transition_file:
-                    self.current_transition_file = files[-1]
-                    self.render_transition_content(files[-1])
+                self.render_transition_content(files[-1])
+
+            if len(files) > 1:
+                for i in range(len(files) - 1):
+                    filepath = os.path.join(TRANSITION_DATA_DIR, files[i])
+                    if os.path.exists(filepath):
+                        os.remove(filepath)
 
     def check_new_next_temperature_files(self):
         files = os.listdir(NEXT_TEMPERATURE_DIR)
