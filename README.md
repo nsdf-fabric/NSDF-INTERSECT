@@ -14,6 +14,7 @@ This repository hosts the dashboard, dashboard service, and test clients for the
   - [Single file client](#dashboard_clientpy)
   - [Real-time client](#realtime_clientpy)
 - [Running all services](#-running-all-services)
+- [Running with pre-built images](#running-with-pre-built-images)
 
 ## 📈 Dashboard
 
