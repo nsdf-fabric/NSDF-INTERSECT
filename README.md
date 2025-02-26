@@ -1,3 +1,10 @@
+<p align="center">
+    <img src="assets/nsdf-intersect.png" width="1200" alt="NSDF-INTERSECT logo">
+</p>
+<p align="center">
+ <img src="https://github.com/nsdf-fabric/NSDF-INTERSECT/actions/workflows/publish.yml/badge.svg" alt="publish status badge">
+</p>
+
 # NSDF-INTERSECT
 
 This repository hosts the dashboard, dashboard service, and test clients for the [NOMAD experiment Fe2O3](https://docs.google.com/document/d/1wsDgHqE7Mg6-hM07lKuhoV7-m2mvKDEZ/edit).
