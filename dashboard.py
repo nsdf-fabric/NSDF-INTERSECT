@@ -288,7 +288,7 @@ class AppState:
         if files:
             files = sorted(files, key=lambda f: int(f.split("_")[0]))
             if files[-1] != self.current_transition_file:
-                self.current_transition_file[-1]
+                self.current_transition_file = files[-1]
                 self.render_transition_content(files[-1])
 
             if len(files) > 1:
