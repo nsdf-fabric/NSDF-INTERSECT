@@ -2,9 +2,9 @@ apiVersion: v2
 name: nsdf-intersect-linode
 description: Comprehensive deployment for our Linode instance
 type: application
-version: 0.0.2
+version: 0.0.1
 dependencies:
   # core INTERSECT
   - name: intersect
     repository: https://intersect-sdk.github.io/helm-charts/
-    version: "0.0.2"
+    version: "0.0.3"
