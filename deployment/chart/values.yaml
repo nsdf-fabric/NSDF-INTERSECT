@@ -25,6 +25,10 @@ brokerPassword: ""
 
 intersect:
   intersect-message-broker-1:
+    image: 
+      debug: true
+    diagnosticMode:
+      enabled: true
     auth:
       username: *messageBroker-username
       existingPasswordSecret: *messageBroker-password
