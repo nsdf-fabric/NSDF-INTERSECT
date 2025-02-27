@@ -1,0 +1,63 @@
+######################
+#### ANCHORS #########
+######################
+# anchors are just a useful feature so you don't repeat yourself in the config file
+
+.anchors:
+  # message plane
+  messageBroker:
+    username: &messageBroker-username "controller"
+    # based off of templates/rabbitmq-secret.yaml, this is a hardcoded secret name we can reference across numerous applications
+    brokerSecretName: &messageBroker-password "nsdf-intersect-broker-secret"
+    amqpNodePort: &messageBroker-amqpNodePort 30010
+    mqttNodePort: &messageBroker-mqttNodePort 30011
+    #stompNodePort: &messageBroker-stompNodePort 30012
+    managerNodePort: &messageBroker-managerNodePort 30013
+    metricsNodePort: &messageBroker-metricsNodePort 30014
+    distNodePort: &messageBroker-distNodePort 30015
+    epmdNodePort: &messageBroker-epmdNodePort 30016
+
+commonLabels: {}
+commonAnnotations: {}
+
+# provide a real value in the secret file
+brokerPassword: ""
+
+intersect:
+  intersect-message-broker-1:
+    auth:
+      username: *messageBroker-username
+      existingPasswordSecret: *messageBroker-password
+    # this example will use a NodePort service
+    service:
+      type: NodePort
+      nodePorts:
+        amqp: *messageBroker-amqpNodePort
+        dist: *messageBroker-distNodePort
+        manager: *messageBroker-managerNodePort
+        epmd: *messageBroker-epmdNodePort
+        metrics: *messageBroker-metricsNodePort
+      extraPorts:
+        - name: mqtt
+          port: 1883
+          targetPort: 1883
+          nodePort: *messageBroker-mqttNodePort
+        #- name: stomp
+        #  port: 61613
+        #  targetPort: 61613
+        #  nodePort: *messageBroker-stompNodePort    
+    resources:
+      requests:
+        memory: "2Gi"
+        # cpu: "8"
+        # ephemeral-storage: "2Gi"
+      limits:
+        # NOTE: the default RabbitMQ chart REQUIRES you to set the "memory" value EVEN IF .Values.intersect-message-broker-1.memoryHighWatermark.type is "absolute"
+        # this got fixed on a later version of the RabbitMQ chart than what we're using: https://github.com/bitnami/charts/commit/b92af12ad55e92c8b1377987b222090787d23b02
+        memory: "4Gi"
+        # cpu: "16"
+        # ephemeral-storage: "4Gi"
+
+  intersect-storage-1:
+    # we shouldn't need MINIO for this deployment
+    enabled: false

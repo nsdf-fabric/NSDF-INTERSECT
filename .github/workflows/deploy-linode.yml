@@ -1,0 +1,38 @@
+name: Linode Deployment
+
+on:
+  workflow_dispatch:
+
+jobs:
+  helm-release:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # note that the kubeconfig must be base64-encoded in the secret
+      - name: Setup Kubeconfig and secret values
+        run: |
+          mkdir -p ~/.kube
+          echo ${{ secrets.LINODE_B64_KUBECONFIG }} | base64 --decode > ~/.kube/config
+          echo ${{ secrets.LINODE_B64_SECRET_VALUES }} | base64 --decode > ~/.kube/secret-values.yaml
+          chmod -R g-r ~/.kube/
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+
+      # Uncomment this job if adding Helm repos from private repositories
+      #- name: Add Helm repo dependencies
+      #  run: |
+      #    helm repo add bitnami https://charts.bitnami.com/bitnami
+
+      - name: Deploy on Linode
+        run: helm upgrade nsdf-intersect deployment/chart --install --wait -f ~/.kube/secret-values.yaml
+
+      - name: Cleanup
+        run: rm -rf ~/.kube
