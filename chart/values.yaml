@@ -1,0 +1,241 @@
+# global values used by this chart
+global:
+  imageRegistry: ""
+  imagePullSecrets: []
+  storageClass: ""
+  kubeVersion: ""
+
+### Generic Kubernetes parameters ###
+
+kubeVersion: ""
+nameOverride: ""
+fullnameOverride: ""
+namespaceOverride: ""
+commonLabels: {}
+commonAnnotations: {}
+extraDeploy: [] # dynamic Kubernetes templates
+
+# TODO this probably has to be configured based on the system
+podSecurityContext:
+  enabled: false
+  fsGroup: 1001
+containerSecurityContext:
+  enabled: false
+  runAsUser: 1001
+  runAsNonRoot: true
+  readOnlyRootFilesystem: false
+
+podLabels: {}
+podAnnotations: {}
+podAffinityPreset: ""
+podAntiAffinityPreset: soft
+### NSDF Diffraction Dashboard ###
+
+dashboard:
+  image:
+    registry: ghcr.io
+    repository: nsdf-fabric/intersect-dashboard
+    tag: "latest"
+    digest: ""
+    pullPolicy: ""
+    pullSecrets: []
+
+  diagnosticMode:
+    enabled: false
+    command:
+      - sleep
+    args:
+      - infinity
+
+  replicaCount: 1
+
+  ports:
+    ui: 8080
+
+  # TODO figure out halfway decent probes
+
+  livenessProbe: # the application developers should help determine sane default params
+    enabled: true
+    initialDelaySeconds: 30
+    periodSeconds: 5
+    timeoutSeconds: 10
+    failureThreshold: 6
+    successThreshold: 1
+
+  readinessProbe: # the application developers should help determine sane default params
+    enabled: true
+    initialDelaySeconds: 5
+    timeoutSeconds: 3
+    periodSeconds: 5
+    failureThreshold: 3
+    successThreshold: 1
+
+  startupProbe: # the application developers should help determine sane default params
+    enabled: false
+    initialDelaySeconds: 30
+    periodSeconds: 5
+    timeoutSeconds: 10
+    failureThreshold: 6
+    successThreshold: 1
+
+  customLivenessProbe: {}
+  customReadinessProbe: {}
+  customStartupProbe: {}
+
+  resources:
+    limits: {}
+    requests: {}
+
+  command: []
+  args: []
+  hostAliases: []
+
+  pdb:
+    create: false
+    minAvailable: 1
+    maxUnavailable: ""
+  autoscaling:
+    enabled: false
+    minReplicas: ""
+    maxReplicas: ""
+    targetCPUUtilizationPercentage: ""
+    targetMemoryUtilizationPercentage: ""
+  nodeAffinityPreset:
+    type: ""
+    key: ""
+    values: []
+  affinity: {}
+  nodeSelector: {}
+  tolerations: []
+  updateStrategy:
+    type: RollingUpdate
+  priorityClassName: ""
+  topologySpreadConstraints: []
+  schedulerName: ""
+  terminationGracePeriodSeconds: ""
+  lifecycleHooks: {}
+  extraEnvVars: []
+  extraEnvVarsCM: ""
+  extraEnvVarsSecret: ""
+  extraVolumes: []
+  extraVolumeMounts: []
+  initContainers: []
+  sidecars: []
+
+
+  ### Traffic exposure
+
+  service:
+    type: ClusterIP
+    nodePort: ""
+    clusterIP: ""
+    loadBalancerIP: ""
+    loadBalancerSourceRanges: []
+    externalTrafficPolicy: Cluster
+    annotations: {}
+    sessionAffinity: None
+    sessionAffinityConfig: {}
+
+  ingress:
+    enabled: false
+    pathType: ImplementationSpecific
+    hostname: intersect-nsdf-dashboard.local
+    ingressClassName: ""
+    path: /
+    annotations: {}
+    tls: false
+    selfSigned: false
+    extraHosts: []
+    extraPaths: []
+    extraTls: []
+    secrets: []
+    extraRules: []
+
+### NSDF-INTERSECT Diffraction Dashboard Service
+
+dashboardService:
+  enabled: true
+
+  ### Shared Volume Mount ###
+
+  volumeMount:
+    dashboardPath: "/share"
+    dashboardServicePath: "/share"
+
+  ### container image
+  image:
+    registry: ghcr.io
+    repository: nsdf-fabric/intersect-service
+    tag: "latest"
+    digest: ""
+    pullPolicy: ""
+    pullSecrets: []
+
+  diagnosticMode:
+    enabled: false
+    command:
+      - sleep
+    args:
+      - infinity
+
+  livenessProbe: # the application developers should help determine sane default params
+    enabled: true
+    initialDelaySeconds: 30
+    periodSeconds: 5
+    timeoutSeconds: 10
+    failureThreshold: 6
+    successThreshold: 1
+
+  readinessProbe: # the application developers should help determine sane default params
+    enabled: true
+    initialDelaySeconds: 5
+    timeoutSeconds: 3
+    periodSeconds: 5
+    failureThreshold: 3
+    successThreshold: 1
+
+  startupProbe: # the application developers should help determine sane default params
+    enabled: false
+    initialDelaySeconds: 30
+    periodSeconds: 5
+    timeoutSeconds: 10
+    failureThreshold: 6
+    successThreshold: 1
+
+  customLivenessProbe: {}
+  customReadinessProbe: {}
+  customStartupProbe: {}
+
+  resources:
+    limits: {}
+    requests: {}
+
+  containerSecurityContext:
+    enabled: false
+    runAsUser: 1001
+    runAsNonRoot: true
+    readOnlyRootFilesystem: false
+
+  command: []
+  args: []
+
+  extraEnvVars: []
+  extraEnvVarsCM: ""
+  extraEnvVarsSecret: ""
+  extraVolumeMounts: []
+
+
+### Kubernetes role stuff
+
+serviceAccount:
+  create: false
+  annotations: {}
+  name: ""
+  automountServiceAccountToken: true
+
+### application stuff
+#
+# See README on format
+intersectConfig: {}
+
+
