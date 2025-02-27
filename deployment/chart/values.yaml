@@ -45,7 +45,11 @@ intersect:
         #- name: stomp
         #  port: 61613
         #  targetPort: 61613
-        #  nodePort: *messageBroker-stompNodePort    
+        #  nodePort: *messageBroker-stompNodePort
+    livenessProbe:
+      enabled: false
+    readinessProbe:
+      enabled: false  
     resources:
       requests:
         memory: "2Gi"

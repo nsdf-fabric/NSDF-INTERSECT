@@ -2,7 +2,7 @@ apiVersion: v2
 name: nsdf-intersect-linode
 description: Comprehensive deployment for our Linode instance
 type: application
-version: 0.0.1
+version: 0.0.2
 dependencies:
   # core INTERSECT
   - name: intersect
