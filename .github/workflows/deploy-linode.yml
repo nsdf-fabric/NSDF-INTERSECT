@@ -26,10 +26,10 @@ jobs:
       - name: Install Helm
         uses: azure/setup-helm@v4
 
-      # Uncomment this job if adding Helm repos from private repositories
-      #- name: Add Helm repo dependencies
-      #  run: |
-      #    helm repo add bitnami https://charts.bitnami.com/bitnami
+      # make sure to run "helm repo add" for private repos before the helm dependency update command
+      - name: Add Helm repo dependencies
+        run: |
+          helm dependency update deployment/chart
 
       - name: Deploy on Linode
         run: helm upgrade nsdf-intersect deployment/chart --install --wait -f ~/.kube/secret-values.yaml
