@@ -61,7 +61,7 @@ services:
       - "10044:10044"
     volumes:
       - intersect_scientist_cloud_volume:/usr/src/storage_service/scientist_cloud_volume
-      - intersect_scientist_cloud_volume:/usr/src/storage_service/retry_volume
+      - intersect_retry_volume:/usr/src/storage_service/retry_volume
 volumes:
   intersect_bragg_data:
   intersect_transition_data:

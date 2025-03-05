@@ -15,6 +15,7 @@ jobs:
     env:
       DASHBOARD_IMAGE_NAME: intersect-dashboard
       DASHBOARD_SERVICE_IMAGE_NAME: intersect-service
+      STORAGE_SERVICE_IMAGE_NAME: intersect-storage
 
     steps:
       - name: Checkout repository
@@ -39,6 +40,10 @@ jobs:
         run: |
           docker build -f Dockerfile.dashboard_service -t ghcr.io/${{ github.repository_owner }}/${{env.DASHBOARD_SERVICE_IMAGE_NAME}}:latest .
 
+      - name: Build Storage Service Docker image
+        run: |
+          docker build -f Dockerfile.storage_service -t ghcr.io/${{ github.repository_owner }}/${{env.STORAGE_SERVICE_IMAGE_NAME}}:latest .
+
       - name: Log in to GHCR
         uses: docker/login-action@v2
         with:
@@ -53,3 +58,7 @@ jobs:
       - name: Push Dashboard Service Docker image to GHCR
         run: |
           docker push ghcr.io/${{ github.repository_owner }}/${{env.DASHBOARD_SERVICE_IMAGE_NAME}}:latest
+
+      - name: Push Storage Service Docker image to GHCR
+        run: |
+          docker push ghcr.io/${{ github.repository_owner }}/${{env.STORAGE_SERVICE_IMAGE_NAME}}:latest
