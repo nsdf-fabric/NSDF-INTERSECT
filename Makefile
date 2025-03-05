@@ -20,4 +20,4 @@ undeploy:
 	@docker compose down
 
 rmvolumes:
-	@docker volume rm nsdf-intersect_intersect_bragg_data nsdf-intersect_intersect_next_temperature_data nsdf-intersect_intersect_scientist_cloud_volume nsdf-intersect_intersect_transition_data
+	@docker volume rm nsdf-intersect_intersect_bragg_data nsdf-intersect_intersect_next_temperature_data nsdf-intersect_intersect_scientist_cloud_volume nsdf-intersect_intersect_transition_data nsdf-interesect_intersect_retry_volume
