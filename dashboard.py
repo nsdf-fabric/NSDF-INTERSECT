@@ -35,7 +35,7 @@ class AppState:
         self.bragg_data_dict = dict(
             data=[],
             layout=go.Layout(
-                title=dict(text="", font=dict(size=22, weight="bold")),
+                title=dict(text="Bragg Data", font=dict(size=22, weight="bold")),
                 xaxis=dict(title="d-Spacing"),
                 yaxis=dict(title="Intensity"),
             ),
