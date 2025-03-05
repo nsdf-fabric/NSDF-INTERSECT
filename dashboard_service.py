@@ -55,11 +55,17 @@ class DashboardCapability(IntersectBaseCapabilityImplementation):
         Endpoint to return a .gsa file with bragg data and write it to disk"""
         timestamp = int(time.time())
         path = os.path.join("./bragg_data", f"{timestamp}_{bragg_file.filename}")
-        os.makedirs(os.path.dirname(path), exist_ok=True)
+        storage_path = os.path.join(
+            "./scientist_cloud_volume", f"{timestamp}_{bragg_file.filename}"
+        )
 
-        with open(path, "wb") as f:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        os.makedirs(os.path.dirname(storage_path), exist_ok=True)
+
+        with open(path, "wb") as f, open(storage_path, "wb") as s:
             bytes_data = base64.decodebytes(bragg_file.file)
             f.write(bytes_data)
+            s.write(bytes_data)
 
     @intersect_message()
     def get_transition_data(self, transition_file: TransitionFile) -> None:
@@ -69,12 +75,18 @@ class DashboardCapability(IntersectBaseCapabilityImplementation):
         path = os.path.join(
             "./transition_data", f"{timestamp}_{transition_file.filename}"
         )
-        os.makedirs(os.path.dirname(path), exist_ok=True)
+        storage_path = os.path.join(
+            "./scientist_cloud_volume", f"{timestamp}_{transition_file.filename}"
+        )
 
-        with open(path, "w") as f:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        os.makedirs(os.path.dirname(storage_path), exist_ok=True)
+
+        with open(path, "w") as f, open(storage_path, "w") as s:
             for data_tuple in transition_file.data:
                 temp, peak1, peak2 = data_tuple
                 f.write(f"{temp},{peak1},{peak2}\n")
+                s.write(f"{temp},{peak1},{peak2}\n")
 
     @intersect_message()
     def get_next_temperature(self, next_temperature: NextTemperature) -> None:
@@ -83,10 +95,15 @@ class DashboardCapability(IntersectBaseCapabilityImplementation):
         """
         timestamp = int(time.time())
         path = os.path.join("./next_temperature_data", f"{timestamp}_ANDiE.txt")
+        storage_path = os.path.join(
+            "./scientist_cloud_volume", f"{timestamp}_ANDiE.txt"
+        )
         os.makedirs(os.path.dirname(path), exist_ok=True)
+        os.makedirs(os.path.dirname(storage_path), exist_ok=True)
 
-        with open(path, "w") as f:
+        with open(path, "w") as f, open(storage_path, "w") as s:
             f.write(f"{next_temperature.data}")
+            s.write(f"{next_temperature.data}")
 
 
 def dashboard_service():

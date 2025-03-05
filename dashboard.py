@@ -1,22 +1,24 @@
 import os
-from typing import List
+from typing import List, DefaultDict
+from collections import defaultdict
 import panel as pn
 from load_gsas import load_gsas
 import plotly.graph_objects as go
-from datetime import datetime
+from datetime import datetime, timezone
 import numpy as np
 
 MAX_BANKS = 6
 BRAGG_DIR = "./bragg_data"
 TRANSITION_DATA_DIR = "./transition_data"
 NEXT_TEMPERATURE_DIR = "./next_temperature_data"
+STATEFUL_DATA_DIR = "./scientist_cloud_volume"
 DELAY = 2
 
 
 class AppState:
     def __init__(self):
         # data
-        self.files = self.load_files()
+        self.files = self.load_stateful_files()
         self.current_bragg_file = ""
         self.current_transition_file = ""
         self.current_next_temperature_file = ""
@@ -33,14 +35,16 @@ class AppState:
         self.bragg_data_dict = dict(
             data=[],
             layout=go.Layout(
-                title="", xaxis=dict(title="d-Spacing"), yaxis=dict(title="Intensity")
+                title=dict(text="", font=dict(size=22, weight="bold")),
+                xaxis=dict(title="d-Spacing"),
+                yaxis=dict(title="Intensity"),
             ),
         )
         self.bragg_data_by_bank_dict = [
             dict(
                 data=[],
                 layout=go.Layout(
-                    title=f"Bank {i+1}",
+                    title=dict(text=f"Bank {i+1}", font=dict(size=22, weight="bold")),
                     xaxis=dict(title="d-Spacing"),
                     yaxis=dict(title="Intensity"),
                 ),
@@ -50,9 +54,19 @@ class AppState:
         self.transition_data_dict = dict(
             data=[],
             layout=go.Layout(
-                title="Transition Plot",
+                title=dict(text="Transition Plot", font=dict(size=22, weight="bold")),
                 xaxis=dict(title="Temperature (K)"),
                 yaxis=dict(title="d-Spacing"),
+            ),
+        )
+        self.stateful_plot_data_dict = dict(
+            data=[],
+            layout=go.Layout(
+                title=dict(
+                    text="Bragg Data Stateful Plot", font=dict(size=22, weight="bold")
+                ),
+                xaxis=dict(title="d-Spacing"),
+                yaxis=dict(title="Intensity"),
             ),
         )
 
@@ -68,14 +82,19 @@ class AppState:
             self.transition_data_dict, sizing_mode="stretch_both"
         )
 
-        self.select_file = pn.widgets.AutocompleteInput(
-            name="gsa file",
+        self.stateful_plot = pn.pane.Plotly(
+            self.stateful_plot_data_dict, sizing_mode="stretch_both"
+        )
+
+        self.select_bragg_file = pn.widgets.AutocompleteInput(
+            name="Bragg File Timestamp",
             restrict=True,
             options=self.files,
             case_sensitive=False,
             search_strategy="includes",
-            placeholder="Search Mid File",
-            value=self.files[0],
+            placeholder="Select a Timestamp to Load",
+            value="",
+            min_characters=0,
         )
 
         self.xlim_slider = pn.widgets.FloatSlider(
@@ -93,18 +112,25 @@ class AppState:
         )
         self.wkspinfo_md = pn.pane.Markdown("""""")
         self.all_banks_header_md = pn.pane.Markdown("""""")
+        self.andie_header_md = pn.pane.Markdown("""""")
+        self.stateful_plot_header_md = pn.pane.Markdown("""""")
 
         self.render_sidebar_content()
         self.render_main_content()
 
-    def load_files(self) -> List[str]:
-        files = []
-        with open("./short_list_of_data.txt") as f:
-            for line in f:
-                filepath = line.strip()
-                name = os.path.basename(filepath)
-                files.append(name)
-        return files
+    def load_stateful_files(self) -> DefaultDict[str, str]:
+        files = os.listdir(STATEFUL_DATA_DIR)
+        stateful_files = defaultdict()
+        if files:
+            for file in files:
+                if file.endswith(".gsa"):
+                    epoch = int(file.split("_")[0])
+                    human_readable_timestamp = datetime.fromtimestamp(
+                        epoch, tz=timezone.utc
+                    ).strftime("%A, %B %d, %Y %I:%M:%S %p UTC")
+                    stateful_files[human_readable_timestamp] = file
+
+        return stateful_files
 
     def load_workspace(self, filename: str):
         self.wksp = load_gsas(os.path.join(BRAGG_DIR, filename))
@@ -115,12 +141,14 @@ class AppState:
     def render_transition_content(self, filename):
         temp, peak1, peak2 = [], [], []
         traces = []
+
         with open(os.path.join(TRANSITION_DATA_DIR, filename)) as f:
             for line in f:
                 data_tuple = line.strip().split(",")
                 temp.append(float(data_tuple[0]))
                 peak1.append(float(data_tuple[1]))
                 peak2.append(float(data_tuple[2]))
+
         # peak 1
         traces.append(
             go.Scatter(
@@ -190,15 +218,10 @@ class AppState:
             self.lastUpdate = datetime.now().strftime("%A, %B %d, %Y %I:%M:%S %p UTC")
             # patching header
             self.all_banks_header_md.object = f"""
-            <h1>{self.wksp_title}</h1>
             <div style="border: 4px solid #00662c; padding: 8px; background-color: #e0f7e0; display: inline-block; 
                 border-radius: 15px; font-size: 18px; font-family: Arial, sans-serif;">
             🔴 <strong>Live:</strong> {self.lastUpdate}
-            </div>        
-            <div style="border: 4px solid #FBC02D;  padding: 8px; background-color: #FFF9C4; display: inline-block; 
-                border-radius: 15px; font-size: 18px; font-family: Arial, sans-serif;">
-            <strong>ANDiE Next Temperature:</strong> {self.next_temperature} K
-            </div>        
+            </div>
             """
 
             traces, self.maxX, self.maxY = [], 0.0, 0.0
@@ -233,7 +256,7 @@ class AppState:
             self.bragg_data_dict["data"] = traces
             self.bragg_data_dict["layout"].xaxis.range = [self.minX, 8.0]
             self.bragg_data_dict["layout"].yaxis.range = [self.minY, 3.0]
-            self.bragg_data_dict["layout"].title = self.wksp_title
+            self.bragg_data_dict["layout"].title.text = self.wksp_title
             self.bragg_data_plot.object = self.bragg_data_dict
 
     def gen_figure_data(self, wksp_index: int, name: str):
@@ -264,9 +287,41 @@ class AppState:
         self.render_sidebar_content()
         self.render_main_content()
 
-    def update_stateful_plot(self):
+    def update_stateful_plot(self, file):
         # pull data from remote storage and display on a separate tab
-        pass
+        if file != "":
+            traces = []
+            wksp = load_gsas(os.path.join(STATEFUL_DATA_DIR, file))
+            for bank_number in wksp.getSpectrumNumbers():
+                i = wksp.getIndexFromSpectrumNumber(bank_number)
+                dataX, dataY = wksp.dataX(i), wksp.dataY(i)
+                traces.append(
+                    go.Scatter(
+                        x=dataX,
+                        y=dataY,
+                        name=f"{wksp.getName()} (Bank {i})",
+                        line=dict(width=2),
+                    )
+                )
+            epoch = int(wksp.getName().split("_")[0])
+            human_readable_timestamp = datetime.fromtimestamp(
+                epoch, tz=timezone.utc
+            ).strftime("%A, %B %d, %Y %I:%M:%S %p UTC")
+
+            self.stateful_plot_header_md.object = f"""
+            <div style="border: 4px solid #005b8c; padding: 8px; background-color: #e0f0f7; display: inline-block; 
+                border-radius: 15px; font-size: 18px; font-family: Arial, sans-serif;">
+            <strong>Date:</strong> {human_readable_timestamp}
+            </div>
+            """
+
+            self.stateful_plot_data_dict["data"] = traces
+            self.stateful_plot_data_dict["layout"].xaxis.range = [0, 8.0]
+            self.stateful_plot_data_dict["layout"].yaxis.range = [0, 3.0]
+            self.stateful_plot_data_dict["layout"].title.text = (
+                f"Bragg Data: {wksp.getName()}"
+            )
+            self.stateful_plot.object = self.stateful_plot_data_dict
 
     # LIFECYCLE METHODS
     def check_new_bragg_files(self):
@@ -307,20 +362,29 @@ class AppState:
                     for line in f:
                         temp = float(line.strip())
                         self.next_temperature = temp
-
+                self.andie_header_md.object = f"""
+                <div style="border: 4px solid #FBC02D;  padding: 8px; background-color: #FFF9C4; display: inline-block; 
+                    border-radius: 15px; font-size: 18px; font-family: Arial, sans-serif;">
+                <strong>ANDiE Next Temperature:</strong> {self.next_temperature} K
+                </div>
+                """
             if len(files) > 1:
                 for i in range(len(files) - 1):
                     filepath = os.path.join(NEXT_TEMPERATURE_DIR, files[i])
                     if os.path.exists(filepath):
                         os.remove(filepath)
 
+    def update_stateful_plot_list(self):
+        self.files = self.load_stateful_files()
+        self.select_bragg_file.options = self.files
+
 
 def main():
     pn.extension("plotly")
     app_state = AppState()
 
-    all_banks_tab = pn.Column(
-        app_state.all_banks_header_md,
+    bragg_data_tab = pn.Column(
+        pn.Row(app_state.all_banks_header_md, app_state.andie_header_md),
         app_state.bragg_data_plot,
     )
 
@@ -330,33 +394,40 @@ def main():
     )
 
     transition_plot_tab = pn.Column(
-        app_state.all_banks_header_md, app_state.transition_plot
+        pn.Row(app_state.all_banks_header_md, app_state.andie_header_md),
+        app_state.transition_plot,
     )
 
     information_tab = pn.Row(app_state.wkspinfo_md)
 
+    stateful_plots_tab = pn.Column(
+        app_state.stateful_plot_header_md, app_state.stateful_plot
+    )
+
     main = pn.Tabs(
-        ("Bragg Data", all_banks_tab),
+        ("Bragg Data", bragg_data_tab),
         ("By Bank", by_bank_tab),
         ("Transition Plot", transition_plot_tab),
+        ("Timestamp", stateful_plots_tab),
         ("Information", information_tab),
     )
+
     sidebar = pn.Column(
         pn.pane.Markdown("<h1>Controls</h1>"),
-        app_state.select_file,
+        app_state.select_bragg_file,
         app_state.xlim_slider,
         app_state.ylim_slider,
         app_state.reset_axis_button,
     )
 
     # reactivity
-    pn.bind(app_state.update_stateful_plot, app_state.select_file, watch=True)
+    pn.bind(app_state.update_stateful_plot, app_state.select_bragg_file, watch=True)
     pn.bind(app_state.update_x_limit, app_state.xlim_slider, watch=True)
     pn.bind(app_state.update_y_limit, app_state.ylim_slider, watch=True)
     pn.bind(app_state.reset_limits, app_state.reset_axis_button, watch=True)
 
     template = pn.template.MaterialTemplate(
-        title="INTERSECT",
+        title="NSDF INTERSECT",
         header=[],
         main=[main],
         sidebar=[sidebar],
@@ -374,6 +445,10 @@ def main():
 
     pn.state.add_periodic_callback(
         callback=app_state.check_new_next_temperature_files, period=DELAY * 1000
+    )
+
+    pn.state.add_periodic_callback(
+        callback=app_state.update_stateful_plot_list, period=45 * 1000
     )
 
     template.servable()

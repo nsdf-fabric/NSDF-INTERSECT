@@ -40,6 +40,7 @@ services:
       - intersect_bragg_data:/usr/src/dashboard/bragg_data/
       - intersect_transition_data:/usr/src/dashboard/transition_data/
       - intersect_next_temperature_data:/usr/src/dashboard/next_temperature_data/
+      - intersect_scientist_cloud_volume:/usr/src/dashboard/scientist_cloud_volume
   dashboard_service:
     image: "intersect-service:latest"
     ports:
@@ -51,7 +52,19 @@ services:
       - intersect_bragg_data:/usr/src/dashboard_service/bragg_data/
       - intersect_transition_data:/usr/src/dashboard_service/transition_data/
       - intersect_next_temperature_data:/usr/src/dashboard_service/next_temperature_data/
+      - intersect_scientist_cloud_volume:/usr/src/dashboard_service/scientist_cloud_volume
+  storage_service:
+    image: "intersect-storage:latest"
+    env_file:
+      - .env
+    ports:
+      - "10044:10044"
+    volumes:
+      - intersect_scientist_cloud_volume:/usr/src/storage_service/scientist_cloud_volume
+      - intersect_scientist_cloud_volume:/usr/src/storage_service/retry_volume
 volumes:
   intersect_bragg_data:
   intersect_transition_data:
   intersect_next_temperature_data:
+  intersect_scientist_cloud_volume:
+  intersect_retry_volume:

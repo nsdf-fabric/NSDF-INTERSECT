@@ -1,3 +1,9 @@
 __pycache__
 *.tgz
 Chart.lock
+.env.*
+.env
+bragg_data
+transition_data
+next_temperature_data
+scientist_cloud_volume
