@@ -32,6 +32,7 @@ class AppState:
         self.minY = 0.0
         self.maxX = 0.0
         self.maxY = 0.0
+
         self.bragg_data_dict = dict(
             data=[],
             layout=go.Layout(
@@ -52,7 +53,15 @@ class AppState:
             for i in range(MAX_BANKS)
         ]
         self.transition_data_dict = dict(
-            data=[],
+            data=[
+                go.Scatter(
+                    mode="lines",
+                    x=[],
+                    y=[],
+                    name="ANDiE Next Temperature",
+                    line=dict(width=3, color="green", dash="dash"),
+                )
+            ],
             layout=go.Layout(
                 title=dict(text="Transition Plot", font=dict(size=22, weight="bold")),
                 xaxis=dict(title="Temperature (K)"),
@@ -141,6 +150,7 @@ class AppState:
     def render_transition_content(self, filename):
         temp, peak1, peak2 = [], [], []
         traces = []
+        maxY = 0.0
 
         with open(os.path.join(TRANSITION_DATA_DIR, filename)) as f:
             for line in f:
@@ -148,6 +158,7 @@ class AppState:
                 temp.append(float(data_tuple[0]))
                 peak1.append(float(data_tuple[1]))
                 peak2.append(float(data_tuple[2]))
+                maxY = max(maxY, float(data_tuple[1]), float(data_tuple[2]))
 
         # peak 1
         traces.append(
@@ -169,6 +180,16 @@ class AppState:
                 name="peak X = 4.6",
                 marker=dict(size=np.linspace(5, 35, len(temp))),
                 line=dict(width=1),
+            )
+        )
+        # ANDiE trace
+        traces.append(
+            go.Scatter(
+                mode="lines",
+                x=[self.next_temperature, self.next_temperature],
+                y=[0.0, maxY],
+                name="ANDiE Next Temperature",
+                line=dict(width=3, color="green", dash="dash"),
             )
         )
         # patching transition plot
@@ -362,17 +383,30 @@ class AppState:
                     for line in f:
                         temp = float(line.strip())
                         self.next_temperature = temp
+
                 self.andie_header_md.object = f"""
                 <div style="border: 4px solid #FBC02D;  padding: 8px; background-color: #FFF9C4; display: inline-block; 
                     border-radius: 15px; font-size: 18px; font-family: Arial, sans-serif;">
                 <strong>ANDiE Next Temperature:</strong> {self.next_temperature} K
                 </div>
                 """
+
+                # update ANDiE trace in transition
+                self.transition_data_dict["data"][-1].x = [
+                    self.next_temperature,
+                    self.next_temperature,
+                ]
+                self.transition_plot.object = self.transition_data_dict
             if len(files) > 1:
                 for i in range(len(files) - 1):
                     filepath = os.path.join(NEXT_TEMPERATURE_DIR, files[i])
                     if os.path.exists(filepath):
                         os.remove(filepath)
+
+    def check_transition_and_next_temp(self):
+        # update both to render ANDiE next temperature in transition
+        self.check_new_next_temperature_files()
+        self.check_new_transition_files()
 
     def update_stateful_plot_list(self):
         self.files = self.load_stateful_files()
@@ -440,11 +474,7 @@ def main():
         callback=app_state.check_new_bragg_files, period=DELAY * 1000
     )
     pn.state.add_periodic_callback(
-        callback=app_state.check_new_transition_files, period=DELAY * 1000
-    )
-
-    pn.state.add_periodic_callback(
-        callback=app_state.check_new_next_temperature_files, period=DELAY * 1000
+        callback=app_state.check_transition_and_next_temp, period=DELAY * 1000
     )
 
     pn.state.add_periodic_callback(
