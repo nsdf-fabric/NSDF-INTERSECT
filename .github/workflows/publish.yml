@@ -1,4 +1,4 @@
-name: Publish Dashboard and Dashboard Service to GHCR
+name: Publish Services to GHCR
 
 on:
   push:
