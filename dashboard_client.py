@@ -81,11 +81,11 @@ def prepare_transition_message():
     )
 
 
-def prepare_next_temperature_message():
+def prepare_next_temperature_message(val=225.0):
     return IntersectDirectMessageParams(
         destination="nsdf-organization.nsdf-facility.nsdf-system.nsdf-subsystem.nsdf-dashboard-service",
         operation="NSDFDashboard.get_next_temperature",
-        payload=NextTemperature(data=225.0),
+        payload=NextTemperature(data=val),
     )
 
 
@@ -115,7 +115,8 @@ def main():
         default=False,
         help="send next temperature data",
     )
-    parser.add_argument("--n", default=1, help="number of files to send")
+    parser.add_argument("--n", default=1, help="number of bragg files to send")
+    parser.add_argument("--val", default=225.0, help="next temperature custom value")
     args = parser.parse_args()
 
     initial_messages = []
@@ -125,7 +126,7 @@ def main():
     if args.transition:
         initial_messages.append(prepare_transition_message())
     if args.next_temp:
-        initial_messages.append(prepare_next_temperature_message())
+        initial_messages.append(prepare_next_temperature_message(args.val))
 
     if len(initial_messages) == 0:
         return

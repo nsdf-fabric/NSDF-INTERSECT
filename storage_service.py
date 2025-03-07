@@ -1,6 +1,5 @@
 import pathlib
 import dotenv
-import signal
 import os
 from botocore.client import Config
 from botocore.exceptions import ClientError
@@ -9,7 +8,7 @@ import time
 import logging
 import subprocess
 import random
-import sys
+import concurrent.futures
 
 PREFIX = "utk"
 STORAGE_VOLUME = "./scientist_cloud_volume"
@@ -19,9 +18,9 @@ BUCKET_PATH = "utk"
 BRAGG_PATH = "bragg_data"
 TRANSITION_DATA_PATH = "transition_data"
 NEXT_TEMPERATURE_DATA_PATH = "next_temperature_data"
-SCAN_PERIOD = 60
+SCAN_PERIOD = 30
 
-logging.basicConfig(level=logging.ERROR)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
@@ -51,9 +50,11 @@ def check_if_key_exists(key: str) -> bool:
         return False
 
 
-def upload_with_retry(local_filepath, key, cksum, max_retries=5, delay=2):
+def upload_with_retry(local_filepath, key, max_retries=5, delay=2) -> str:
     retries = 0
     bucket = get_bucket()
+    cksum = int(Shell(f"cksum {local_filepath}").split()[0].strip())
+    filename = os.path.basename(local_filepath)
     while retries < max_retries:
         try:
             bucket.upload_file(
@@ -61,7 +62,7 @@ def upload_with_retry(local_filepath, key, cksum, max_retries=5, delay=2):
                 key,
                 ExtraArgs={"Metadata": {"checksum": str(cksum)}},
             )
-            return True
+            return filename
         except Exception:
             retries += 1
             if retries < max_retries:
@@ -74,7 +75,9 @@ def upload_with_retry(local_filepath, key, cksum, max_retries=5, delay=2):
                 with open(path, "a") as f:
                     f.write(f"{os.path.basename(local_filepath)}\n")
 
-                return False
+                raise Exception(f"Failed to upload {filename}, after {max_retries} retries")
+
+    return filename
 
 
 def get_bucket():
@@ -97,13 +100,7 @@ def get_bucket():
     return bucket
 
 
-def signal_handler(_sig, _frame):
-    logger.info("Stopping storage service...")
-    sys.exit(0)
-
-
 def main():
-    signal.signal(signal.SIGTERM, signal_handler)
     logger.info("Starting Storage Service")
 
     if not os.path.exists(STORAGE_VOLUME):
@@ -111,6 +108,7 @@ def main():
 
     while True:
         files = os.listdir(STORAGE_VOLUME)
+        jobs = []
         if files:
             for file in files:
                 subfolder = ""
@@ -123,17 +121,22 @@ def main():
                         else:
                             subfolder = TRANSITION_DATA_PATH
                     case _:
+                        logger.warning(f"Skipping unsupported file type: {file}")
                         continue
 
                 key = os.path.join(PREFIX, subfolder, file)
                 if not check_if_key_exists(key):
                     local_filepath = os.path.join(STORAGE_VOLUME, file)
-                    cksum = int(Shell(f"cksum {local_filepath}").split()[0].strip())
-                    success = upload_with_retry(local_filepath, key, cksum)
-                    if success:
-                        logger.info(f"Uploaded {file}")
-                    else:
-                        logger.error(f"Failed to upload {file}")
+                    jobs.append([upload_with_retry, local_filepath, key])
+
+            with concurrent.futures.ThreadPoolExecutor(max_workers=32) as ex:
+                futures = [ex.submit(*job) for job in jobs]
+                for future in concurrent.futures.as_completed(futures):
+                    try:
+                        result = future.result()
+                        logger.info(f"Uploaded file {result}")
+                    except Exception as e:
+                        logger.error(e)
 
         time.sleep(SCAN_PERIOD)
 
