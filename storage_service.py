@@ -9,16 +9,8 @@ import logging
 import subprocess
 import random
 import concurrent.futures
+from constants import BUCKET_PATH, BRAGG_PATH, SCIENTIST_CLOUD_VOLUME, STORAGE_SCAN_PERIOD, STATE_VOLUME, RETRY_FILE
 
-PREFIX = "utk"
-STORAGE_VOLUME = "./scientist_cloud_volume"
-RETRY_VOLUME = " ./retry_volume"
-RETRY_FILE = "retry.txt"
-BUCKET_PATH = "utk"
-BRAGG_PATH = "bragg_data"
-TRANSITION_DATA_PATH = "transition_data"
-NEXT_TEMPERATURE_DATA_PATH = "next_temperature_data"
-SCAN_PERIOD = 30
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -70,7 +62,7 @@ def upload_with_retry(local_filepath, key, max_retries=5, delay=2) -> str:
                 time.sleep(delay + random.uniform(0, 1))
             else:
                 # write to retry.txt to upload later
-                path = os.path.join(RETRY_VOLUME, RETRY_FILE)
+                path = os.path.join(STATE_VOLUME, RETRY_FILE)
                 os.makedirs(path, exist_ok=True)
                 with open(path, "a") as f:
                     f.write(f"{os.path.basename(local_filepath)}\n")
@@ -103,31 +95,23 @@ def get_bucket():
 def main():
     logger.info("Starting Storage Service")
 
-    if not os.path.exists(STORAGE_VOLUME):
-        os.makedirs(STORAGE_VOLUME, exist_ok=True)
+    if not os.path.exists(SCIENTIST_CLOUD_VOLUME):
+        os.makedirs(SCIENTIST_CLOUD_VOLUME, exist_ok=True)
 
     while True:
-        files = os.listdir(STORAGE_VOLUME)
+        files = os.listdir(SCIENTIST_CLOUD_VOLUME)
         jobs = []
         if files:
             for file in files:
-                subfolder = ""
                 match pathlib.Path(file).suffix:
                     case ".gsa":
-                        subfolder = BRAGG_PATH
-                    case ".txt":
-                        if "ANDiE" in file:
-                            subfolder = NEXT_TEMPERATURE_DATA_PATH
-                        else:
-                            subfolder = TRANSITION_DATA_PATH
+                        key = os.path.join(BUCKET_PATH, BRAGG_PATH, file)
+                        if not check_if_key_exists(key):
+                            local_filepath = os.path.join(SCIENTIST_CLOUD_VOLUME, file)
+                            jobs.append([upload_with_retry, local_filepath, key])
                     case _:
-                        logger.warning(f"Skipping unsupported file type: {file}")
+                        logger.warning(f"unsupported file type: {file}")
                         continue
-
-                key = os.path.join(PREFIX, subfolder, file)
-                if not check_if_key_exists(key):
-                    local_filepath = os.path.join(STORAGE_VOLUME, file)
-                    jobs.append([upload_with_retry, local_filepath, key])
 
             with concurrent.futures.ThreadPoolExecutor(max_workers=32) as ex:
                 futures = [ex.submit(*job) for job in jobs]
@@ -138,7 +122,7 @@ def main():
                     except Exception as e:
                         logger.error(e)
 
-        time.sleep(SCAN_PERIOD)
+        time.sleep(STORAGE_SCAN_PERIOD)
 
 
 if __name__ == "__main__":
