@@ -1,4 +1,5 @@
 import base64
+import time
 import logging
 import os
 import yaml
@@ -13,7 +14,7 @@ from intersect_sdk import (
     default_intersect_lifecycle_loop,
 )
 
-from dashboard_service import FileType, TransitionFile, NextTemperature
+from dashboard_service import FileType, TransitionFile, TransitionPoint, NextTemperature
 
 logging.basicConfig(level=logging.INFO)
 CONFIG_CLIENT = "config_client.yaml"
@@ -85,7 +86,17 @@ def prepare_next_temperature_message(val=225.0):
     return IntersectDirectMessageParams(
         destination="nsdf-organization.nsdf-facility.nsdf-system.nsdf-subsystem.nsdf-dashboard-service",
         operation="NSDFDashboard.get_next_temperature",
-        payload=NextTemperature(data=val),
+        payload=NextTemperature(data=val, timestamp=int(time.time())),
+    )
+
+
+def prepare_transition_point_message(
+    point: Tuple[float, float, float] = (284.89, 0.9353496748096445, 1.5583828040832086)
+):
+    return IntersectDirectMessageParams(
+        destination="nsdf-organization.nsdf-facility.nsdf-system.nsdf-subsystem.nsdf-dashboard-service",
+        operation="NSDFDashboard.get_transition_data_single",
+        payload=TransitionPoint(data=point),
     )
 
 
@@ -110,6 +121,9 @@ def main():
         "--transition", action="store_true", default=False, help="send transition data"
     )
     parser.add_argument(
+        "--tpoint", action="store_true", default=False, help="send transition data"
+    )
+    parser.add_argument(
         "--next-temp",
         action="store_true",
         default=False,
@@ -125,6 +139,8 @@ def main():
             initial_messages.append(msg)
     if args.transition:
         initial_messages.append(prepare_transition_message())
+    if args.tpoint:
+        initial_messages.append(prepare_transition_point_message())
     if args.next_temp:
         initial_messages.append(prepare_next_temperature_message(args.val))
 

@@ -4,6 +4,14 @@ import base64
 import time
 from typing import List, Tuple
 import yaml
+import uuid
+from constants import (
+    BRAGG_VOLUME,
+    SCIENTIST_CLOUD_VOLUME,
+    STATE_VOLUME,
+    TRANSITION_DATA_FILE,
+    ANDIE_DATA_FILE,
+)
 
 from intersect_sdk import (
     HierarchyConfig,
@@ -35,8 +43,13 @@ class TransitionFile(BaseModel):
     data: List[Tuple[float, float, float]]
 
 
+class TransitionPoint(BaseModel):
+    data: Tuple[float, float, float]
+
+
 class NextTemperature(BaseModel):
     data: float
+    timestamp: int
 
 
 class DashboardCapability(IntersectBaseCapabilityImplementation):
@@ -52,11 +65,12 @@ class DashboardCapability(IntersectBaseCapabilityImplementation):
     @intersect_message()
     def get_bragg_data(self, bragg_file: FileType) -> None:
         """get_bragg_data
-        Endpoint to return a .gsa file with bragg data and write it to disk"""
+        Endpoint to return a .gsa file with bragg data
+        """
         timestamp = int(time.time())
-        path = os.path.join("./bragg_data", f"{timestamp}_{bragg_file.filename}")
+        path = os.path.join(BRAGG_VOLUME, f"{timestamp}_{bragg_file.filename}")
         storage_path = os.path.join(
-            "./scientist_cloud_volume", f"{timestamp}_{bragg_file.filename}"
+            SCIENTIST_CLOUD_VOLUME, f"{timestamp}_{bragg_file.filename}"
         )
 
         os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -69,41 +83,43 @@ class DashboardCapability(IntersectBaseCapabilityImplementation):
 
     @intersect_message()
     def get_transition_data(self, transition_file: TransitionFile) -> None:
-        """get_transtion_data
-        Endpoint to return the entire transition data and write it to disk"""
-        timestamp = int(time.time())
-        path = os.path.join(
-            "./transition_data", f"{timestamp}_{transition_file.filename}"
-        )
-        storage_path = os.path.join(
-            "./scientist_cloud_volume", f"{timestamp}_{transition_file.filename}"
-        )
+        """get_transition_data
+        Endpoint to return an entire transition plot measurement
+        """
 
-        os.makedirs(os.path.dirname(path), exist_ok=True)
+        storage_path = os.path.join(STATE_VOLUME, TRANSITION_DATA_FILE)
         os.makedirs(os.path.dirname(storage_path), exist_ok=True)
 
-        with open(path, "w") as f, open(storage_path, "w") as s:
+        with open(storage_path, "a") as s:
             for data_tuple in transition_file.data:
                 temp, peak1, peak2 = data_tuple
-                f.write(f"{temp},{peak1},{peak2}\n")
-                s.write(f"{temp},{peak1},{peak2}\n")
+                s.write(f"{uuid.uuid4()},{temp},{peak1},{peak2}\n")
+
+    @intersect_message()
+    def get_transition_data_single(self, transition_point: TransitionPoint) -> None:
+        """get_transition_data_single
+        Endpoint to return the next point in the transition plot
+        """
+
+        storage_path = os.path.join(STATE_VOLUME, TRANSITION_DATA_FILE)
+        os.makedirs(os.path.dirname(storage_path), exist_ok=True)
+
+        temp, peak1, peak2 = transition_point.data
+        with open(storage_path, "a") as s:
+            s.write(f"{uuid.uuid4()},{temp},{peak1},{peak2}\n")
 
     @intersect_message()
     def get_next_temperature(self, next_temperature: NextTemperature) -> None:
         """get_next_temperature
         Endpoint to return the ANDiE next temperature
         """
-        timestamp = int(time.time())
-        path = os.path.join("./next_temperature_data", f"{timestamp}_ANDiE.txt")
-        storage_path = os.path.join(
-            "./scientist_cloud_volume", f"{timestamp}_ANDiE.txt"
-        )
-        os.makedirs(os.path.dirname(path), exist_ok=True)
+        storage_path = os.path.join(STATE_VOLUME, ANDIE_DATA_FILE)
         os.makedirs(os.path.dirname(storage_path), exist_ok=True)
 
-        with open(path, "w") as f, open(storage_path, "w") as s:
-            f.write(f"{next_temperature.data}")
-            s.write(f"{next_temperature.data}")
+        with open(storage_path, "a") as s:
+            s.write(
+                f"{uuid.uuid4()},{next_temperature.timestamp},{next_temperature.data}\n"
+            )
 
 
 def dashboard_service():

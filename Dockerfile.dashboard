@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y \
 
 COPY environment.yaml ./environment.yaml
 COPY dashboard.py ./dashboard.py
+COPY constants.py ./constants.py
 COPY load_gsas.py ./load_gsas.py
 
 RUN conda env create -f ./environment.yaml && \

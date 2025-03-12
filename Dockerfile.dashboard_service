@@ -3,6 +3,7 @@ FROM python:3.10-slim
 
 WORKDIR /usr/src/dashboard_service
 COPY dashboard_service.py ./dashboard_service.py
+COPY constants.py ./constants.py
 COPY config_service.yaml ./config_service.yaml
 
 RUN python -m pip install intersect-sdk[amqp]

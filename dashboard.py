@@ -6,13 +6,17 @@ from load_gsas import load_gsas
 import plotly.graph_objects as go
 from datetime import datetime, timezone
 import numpy as np
-
-MAX_BANKS = 6
-BRAGG_DIR = "./bragg_data"
-TRANSITION_DATA_DIR = "./transition_data"
-NEXT_TEMPERATURE_DIR = "./next_temperature_data"
-STATEFUL_DATA_DIR = "./scientist_cloud_volume"
-DELAY = 2
+from constants import (
+    MAX_BANKS,
+    STATE_VOLUME,
+    SCIENTIST_CLOUD_VOLUME,
+    TRANSITION_DATA_FILE,
+    ANDIE_DATA_FILE,
+    BRAGG_VOLUME,
+    BRAGG_SCAN_PERIOD,
+    TRANSITION_SCAN_PERIOD,
+    SELECT_SCAN_PERIOD,
+)
 
 
 class AppState:
@@ -20,14 +24,15 @@ class AppState:
         # data
         self.files = self.load_stateful_files()
         self.current_bragg_file = ""
-        self.current_transition_file = ""
-        self.current_next_temperature_file = ""
+        self.id_transition = ""
+        self.id_andie = ""
         self.wksp = None
         self.wksp_title = ""
         self.name = "No file"
         self.nEvents = 0
-        self.lastUpdate = datetime.now().strftime("%A, %B %d, %Y %I:%M:%S %p UTC")
+        self.lastUpdate = datetime.now().strftime("%B %d, %Y %I:%M:%S %p UTC")
         self.next_temperature = 0.00
+        self.next_temperature_timestamp = 0
         self.minX = 0.0
         self.minY = 0.0
         self.maxX = 0.0
@@ -124,11 +129,11 @@ class AppState:
         self.andie_header_md = pn.pane.Markdown("""""")
         self.stateful_plot_header_md = pn.pane.Markdown("""""")
 
-        self.render_sidebar_content()
-        self.render_main_content()
+        self.render_information_content()
+        self.render_bragg_plot()
 
     def load_stateful_files(self) -> DefaultDict[str, str]:
-        files = os.listdir(STATEFUL_DATA_DIR)
+        files = os.listdir(SCIENTIST_CLOUD_VOLUME)
         stateful_files = defaultdict()
         if files:
             for file in files:
@@ -136,29 +141,29 @@ class AppState:
                     epoch = int(file.split("_")[0])
                     human_readable_timestamp = datetime.fromtimestamp(
                         epoch, tz=timezone.utc
-                    ).strftime("%A, %B %d, %Y %I:%M:%S %p UTC")
+                    ).strftime("%B %d, %Y %I:%M:%S %p UTC")
                     stateful_files[human_readable_timestamp] = file
 
         return stateful_files
 
     def load_workspace(self, filename: str):
-        self.wksp = load_gsas(os.path.join(BRAGG_DIR, filename))
+        self.wksp = load_gsas(os.path.join(BRAGG_VOLUME, filename))
         self.name = self.wksp.name()
         self.wksp_title = self.wksp.getTitle()
         self.nEvents = self.wksp.getNEvents()
 
-    def render_transition_content(self, filename):
+    def render_transition_content(self):
         temp, peak1, peak2 = [], [], []
         traces = []
         maxY = 0.0
 
-        with open(os.path.join(TRANSITION_DATA_DIR, filename)) as f:
+        with open(os.path.join(STATE_VOLUME, TRANSITION_DATA_FILE)) as f:
             for line in f:
                 data_tuple = line.strip().split(",")
-                temp.append(float(data_tuple[0]))
-                peak1.append(float(data_tuple[1]))
-                peak2.append(float(data_tuple[2]))
-                maxY = max(maxY, float(data_tuple[1]), float(data_tuple[2]))
+                temp.append(float(data_tuple[1]))
+                peak1.append(float(data_tuple[2]))
+                peak2.append(float(data_tuple[3]))
+                maxY = max(maxY, float(data_tuple[2]), float(data_tuple[3]))
 
         # peak 1
         traces.append(
@@ -196,7 +201,25 @@ class AppState:
         self.transition_data_dict["data"] = traces
         self.transition_plot.object = self.transition_data_dict
 
-    def render_sidebar_content(self):
+    def render_andie_content(self):
+        self.andie_header_md.object = f"""
+            <div style="border: 4px solid #FBC02D;  padding: 8px; background-color: #FFF9C4; display: inline-block; 
+                border-radius: 15px; font-size: 18px; font-family: Arial, sans-serif;">
+            <strong>ANDiE Next Temperature:</strong> {self.next_temperature} K\n
+            <strong>Last Update:</strong> {datetime.fromtimestamp(self.next_temperature_timestamp, tz=timezone.utc).strftime("%B %d, %Y %I:%M:%S %p UTC")}
+            </div>
+            """
+
+        # update ANDiE trace in transition
+        self.transition_data_dict["data"][-1].x = [
+            self.next_temperature,
+            self.next_temperature,
+        ]
+
+        # patching transition plot
+        self.transition_plot.object = self.transition_data_dict
+
+    def render_information_content(self):
         self.wkspinfo_md.object = f"""
         <style>
         .field {{
@@ -230,13 +253,13 @@ class AppState:
         </div>
         <div class="info-container">
             <div class="title">Dashboard configuration</div>
-            <div class="field">Cycle update: {DELAY}s </div>
+            <div class="field">Cycle update: {BRAGG_SCAN_PERIOD}s </div>
         </div>
         """
 
-    def render_main_content(self):
+    def render_bragg_plot(self):
         if self.wksp:
-            self.lastUpdate = datetime.now().strftime("%A, %B %d, %Y %I:%M:%S %p UTC")
+            self.lastUpdate = datetime.now().strftime("%B %d, %Y %I:%M:%S %p UTC")
             # patching header
             self.all_banks_header_md.object = f"""
             <div style="border: 4px solid #00662c; padding: 8px; background-color: #e0f7e0; display: inline-block; 
@@ -280,6 +303,11 @@ class AppState:
             self.bragg_data_dict["layout"].title.text = self.wksp_title
             self.bragg_data_plot.object = self.bragg_data_dict
 
+    def render_bragg_content(self, name):
+        self.load_workspace(name)
+        self.render_information_content()
+        self.render_bragg_plot()
+
     def gen_figure_data(self, wksp_index: int, name: str):
         bank_data = dict(
             data=go.Scatter(
@@ -303,16 +331,10 @@ class AppState:
         self.xlim_slider.value = self.maxX
         self.ylim_slider.value = self.maxY
 
-    def update_main_layout(self, name):
-        self.load_workspace(name)
-        self.render_sidebar_content()
-        self.render_main_content()
-
     def update_stateful_plot(self, file):
-        # pull data from remote storage and display on a separate tab
         if file != "":
             traces = []
-            wksp = load_gsas(os.path.join(STATEFUL_DATA_DIR, file))
+            wksp = load_gsas(os.path.join(SCIENTIST_CLOUD_VOLUME, file))
             for bank_number in wksp.getSpectrumNumbers():
                 i = wksp.getIndexFromSpectrumNumber(bank_number)
                 dataX, dataY = wksp.dataX(i), wksp.dataY(i)
@@ -327,7 +349,7 @@ class AppState:
             epoch = int(wksp.getName().split("_")[0])
             human_readable_timestamp = datetime.fromtimestamp(
                 epoch, tz=timezone.utc
-            ).strftime("%A, %B %d, %Y %I:%M:%S %p UTC")
+            ).strftime("%B %d, %Y %I:%M:%S %p UTC")
 
             self.stateful_plot_header_md.object = f"""
             <div style="border: 4px solid #005b8c; padding: 8px; background-color: #e0f0f7; display: inline-block; 
@@ -344,69 +366,77 @@ class AppState:
             )
             self.stateful_plot.object = self.stateful_plot_data_dict
 
+    def last_id(self, plot: str) -> str:
+        match plot:
+            case "TRANSITION":
+                transition_state_path = os.path.join(STATE_VOLUME, TRANSITION_DATA_FILE)
+                if not os.path.exists(transition_state_path):
+                    return ""
+
+                with open(transition_state_path, 'rb') as f:
+                    try:
+                        f.seek(-2, os.SEEK_END)
+                        while f.read(1) != b'\n':
+                            f.seek(-2, os.SEEK_CUR)
+                    except OSError:
+                        return ""
+
+                    last_measure = f.readline().decode()
+                    id = last_measure.strip().split(",")[0]
+                    return id
+
+            case "ANDIE":
+                andie_state_path = os.path.join(STATE_VOLUME, ANDIE_DATA_FILE)
+                if not os.path.exists(andie_state_path):
+                    return ""
+
+                with open(andie_state_path, 'rb') as f:
+                    try:
+                        f.seek(-2, os.SEEK_END)
+                        while f.read(1) != b'\n':
+                            f.seek(-2, os.SEEK_CUR)
+                    except OSError:
+                        return ""
+                    last_measure = f.readline().decode().strip().split(",")
+                    id, timestamp, next_temp = last_measure[0], int(last_measure[1]), float(last_measure[2])
+                    self.next_temperature_timestamp = timestamp
+                    self.next_temperature = next_temp
+                    return id
+
+            case _:
+                return ""
+
     # LIFECYCLE METHODS
     def check_new_bragg_files(self):
-        files = os.listdir(BRAGG_DIR)
+        files = os.listdir(BRAGG_VOLUME)
         if files:
             files = sorted(files, key=lambda f: int(f.split("_")[0]))
             if files[-1] != self.current_bragg_file:
                 self.current_bragg_file = files[-1]
-                self.update_main_layout(files[-1])
+                self.render_bragg_content(files[-1])
 
             if len(files) > 1:
                 for i in range(len(files) - 1):
-                    filepath = os.path.join(BRAGG_DIR, files[i])
+                    filepath = os.path.join(BRAGG_VOLUME, files[i])
                     if os.path.exists(filepath):
                         os.remove(filepath)
 
-    def check_new_transition_files(self):
-        files = os.listdir(TRANSITION_DATA_DIR)
-        if files:
-            files = sorted(files, key=lambda f: int(f.split("_")[0]))
-            if files[-1] != self.current_transition_file:
-                self.current_transition_file = files[-1]
-                self.render_transition_content(files[-1])
+    def check_new_transition_data(self):
+        id = self.last_id("TRANSITION")
+        if id != self.id_transition:
+            self.id_transition = id
+            self.render_transition_content()
 
-            if len(files) > 1:
-                for i in range(len(files) - 1):
-                    filepath = os.path.join(TRANSITION_DATA_DIR, files[i])
-                    if os.path.exists(filepath):
-                        os.remove(filepath)
-
-    def check_new_next_temperature_files(self):
-        files = os.listdir(NEXT_TEMPERATURE_DIR)
-        if files:
-            files = sorted(files, key=lambda f: int(f.split("_")[0]))
-            if files[-1] != self.current_next_temperature_file:
-                self.current_next_temperature_file = files[-1]
-                with open(os.path.join(NEXT_TEMPERATURE_DIR, files[-1]), "r") as f:
-                    for line in f:
-                        temp = float(line.strip())
-                        self.next_temperature = temp
-
-                self.andie_header_md.object = f"""
-                <div style="border: 4px solid #FBC02D;  padding: 8px; background-color: #FFF9C4; display: inline-block; 
-                    border-radius: 15px; font-size: 18px; font-family: Arial, sans-serif;">
-                <strong>ANDiE Next Temperature:</strong> {self.next_temperature} K
-                </div>
-                """
-
-                # update ANDiE trace in transition
-                self.transition_data_dict["data"][-1].x = [
-                    self.next_temperature,
-                    self.next_temperature,
-                ]
-                self.transition_plot.object = self.transition_data_dict
-            if len(files) > 1:
-                for i in range(len(files) - 1):
-                    filepath = os.path.join(NEXT_TEMPERATURE_DIR, files[i])
-                    if os.path.exists(filepath):
-                        os.remove(filepath)
+    def check_new_next_temperature_data(self):
+        id = self.last_id("ANDIE")
+        if id != self.id_andie:
+            self.id_andie = id
+            self.render_andie_content()
 
     def check_transition_and_next_temp(self):
         # update both to render ANDiE next temperature in transition
-        self.check_new_next_temperature_files()
-        self.check_new_transition_files()
+        self.check_new_transition_data()
+        self.check_new_next_temperature_data()
 
     def update_stateful_plot_list(self):
         self.files = self.load_stateful_files()
@@ -471,14 +501,15 @@ def main():
 
     # Listen to changes in directory with period = DELAY secs
     pn.state.add_periodic_callback(
-        callback=app_state.check_new_bragg_files, period=DELAY * 1000
+        callback=app_state.check_new_bragg_files, period=BRAGG_SCAN_PERIOD * 1000
     )
     pn.state.add_periodic_callback(
-        callback=app_state.check_transition_and_next_temp, period=DELAY * 1000
+        callback=app_state.check_transition_and_next_temp,
+        period=TRANSITION_SCAN_PERIOD * 1000,
     )
 
     pn.state.add_periodic_callback(
-        callback=app_state.update_stateful_plot_list, period=45 * 1000
+        callback=app_state.update_stateful_plot_list, period=SELECT_SCAN_PERIOD * 1000
     )
 
     template.servable()
