@@ -24,8 +24,9 @@ This repository hosts the dashboard, dashboard service, storage service, and tes
   - [Building storage service image](#building-the-storage-service-image)
   - [Running the storage service container](#running-the-storage-service-container)
 - [Testing Clients](#-testing-with-the-client)
-  - [Single file client](#dashboard_clientpy)
+  - [Single file client](#single_clientpy)
   - [Real-time client](#realtime_clientpy)
+  - [Transition client](#transition_clientpy)
 - [Running all services](#-running-all-services)
 - [Running with pre-built images](#running-with-pre-built-images)
 - [Authors](#authors)
@@ -103,7 +104,7 @@ docker run --rm -p 10044:10044 intersect-storage
 To test the networking of the service and the observer on the dashboard, we can use intersect-sdk to create clients that serve the purpose of simulating
 the traffic through the message broker. We have two clients.
 
-### dashboard_client.py
+### single_client.py
 
 This is a simple client that sends only one file.
 
@@ -112,19 +113,19 @@ To run this client make sure you have the service running, then you can execute 
 - For bragg data
 
 ```bash
-python dashboard_client.py --bragg
+python single_client.py --bragg
 ```
 
 - For transition data
 
 ```bash
-python dashboard_client.py --transition
+python single_client.py --transition
 ```
 
 - For next temperature data
 
 ```bash
-python dashboard_client.py --next-temp --val 30.0
+python single_client.py --next-temp --val 30.0
 ```
 
 ### realtime_client.py
@@ -136,6 +137,20 @@ To run this client make sure you have the service running, then you can execute 
 
 ```bash
 python realtime_client.py
+```
+
+### transition_client.py
+
+This is a client that implements a message stack for testing the transition plot. The transition plot receives the type TransitionData which contains a campaign ID, temperature, and a variable size y-list.
+The client can simulate a full campaign for the transition plot via its two arguments `--n` for number of points `--ny` for y-list length as follows.
+
+```bash
+# default --n is 10 --ny is 3
+python transition_client.py
+```
+
+```bash
+python transition_client.py --ny 5
 ```
 
 ## 📦 Running all services
