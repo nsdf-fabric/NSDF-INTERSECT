@@ -1,15 +1,22 @@
 {{/*
-Return the proper image name (Service)
+Return the proper dashboard image name (Service)
 */}}
-{{- define "nsdf-intersect-dashboard.image" -}}
-{{- include "common.images.image" (dict "imageRoot" .Values.image "global" .Values.global) -}}
+{{- define "nsdf-intersect-dashboard.dashboard.image" -}}
+{{- include "common.images.image" (dict "imageRoot" .Values.dashboard.image "global" .Values.global) -}}
 {{- end -}}
 
 {{/*
-Return the proper Docker Image Registry secret names
+Return the proper dashboard service image name (Service)
+*/}}
+{{- define "nsdf-intersect-dashboard.dashboardService.image" -}}
+{{- include "common.images.image" (dict "imageRoot" .Values.dashboardService.image "global" .Values.global) -}}
+{{- end -}}
+
+{{/*
+Return the proper Container Image Registry secret names
 */}}
 {{- define "nsdf-intersect-dashboard.imagePullSecrets" -}}
-{{- include "common.images.renderPullSecrets" (dict "images" (list .Values.image ) "context" $) -}}
+{{- include "common.images.renderPullSecrets" (dict "images" ( concat (list .Values.dashboard.image .Values.dashboardService.image ) ) "context" $) -}}
 {{- end -}}
 
 

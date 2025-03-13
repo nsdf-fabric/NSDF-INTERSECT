@@ -36,9 +36,46 @@ volumeMount:
   dashboardPath: "/share"
   dashboardServicePath: "/share"
 
+### Section that needs to be fixed ###
+# TODO: fix this to make sense for this application
+pdb:
+  create: false
+  minAvailable: 1
+  maxUnavailable: ""
+autoscaling:
+  enabled: false
+  minReplicas: ""
+  maxReplicas: ""
+  targetCPUUtilizationPercentage: ""
+  targetMemoryUtilizationPercentage: ""
+nodeAffinityPreset:
+  type: ""
+  key: ""
+  values: []
+affinity: {}
+nodeSelector: {}
+tolerations: []
+updateStrategy:
+  type: RollingUpdate
+priorityClassName: ""
+topologySpreadConstraints: []
+schedulerName: ""
+terminationGracePeriodSeconds: ""
+lifecycleHooks: {}
+extraEnvVars: []
+extraEnvVarsCM: ""
+extraEnvVarsSecret: ""
+extraVolumes: []
+etraVolumeMounts: []
+initContainers: []
+sidecars: []
+
 ### NSDF Diffraction Dashboard ###
 
 dashboard:
+  enabled: true
+
+  ### container image
   image:
     registry: ghcr.io
     repository: nsdf-fabric/intersect-dashboard
@@ -97,39 +134,6 @@ dashboard:
   args: []
   hostAliases: []
 
-  pdb:
-    create: false
-    minAvailable: 1
-    maxUnavailable: ""
-  autoscaling:
-    enabled: false
-    minReplicas: ""
-    maxReplicas: ""
-    targetCPUUtilizationPercentage: ""
-    targetMemoryUtilizationPercentage: ""
-  nodeAffinityPreset:
-    type: ""
-    key: ""
-    values: []
-  affinity: {}
-  nodeSelector: {}
-  tolerations: []
-  updateStrategy:
-    type: RollingUpdate
-  priorityClassName: ""
-  topologySpreadConstraints: []
-  schedulerName: ""
-  terminationGracePeriodSeconds: ""
-  lifecycleHooks: {}
-  extraEnvVars: []
-  extraEnvVarsCM: ""
-  extraEnvVarsSecret: ""
-  extraVolumes: []
-  extraVolumeMounts: []
-  initContainers: []
-  sidecars: []
-
-
   ### Traffic exposure
 
   service:
@@ -162,8 +166,6 @@ dashboard:
 
 dashboardService:
   enabled: true
-
-
 
   ### container image
   image:
