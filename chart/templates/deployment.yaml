@@ -64,50 +64,51 @@ spec:
       initContainers:
         {{- include "common.tplvalues.render" (dict "value" .Values.initContainers "context" $) | nindent 8 }}
       {{- end }}
+
       containers:
-        - name: {{ .Chart.Name }}-dashboard-service
-          image: {{ template "nsdf-intersect-dashboard.dashboardService.image" . }}
-          imagePullPolicy: {{ .Values.dashboardService.image.pullPolicy }}
+        - name: {{ .Chart.Name }}-dashboard
+          image: {{ template "nsdf-intersect-dashboard.dashboard.image" . }}
+          imagePullPolicy: {{ .Values.dashboard.image.pullPolicy }}
           {{- if .Values.containerSecurityContext.enabled }}
           securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
           {{- end }}
-          {{- if .Values..dashboardService.diagnosticMode.enabled }}
-          command: {{- include "common.tplvalues.render" (dict "value" .Values.dashboardService.diagnosticMode.command "context" $) | nindent 12 }}
-          {{- else if .Values.dashboardService.command }}
-          command: {{- include "common.tplvalues.render" (dict "value" .Values.dashboardService.command "context" $) | nindent 12 }}
+          {{- if .Values.dashboard.diagnosticMode.enabled }}
+          command: {{- include "common.tplvalues.render" (dict "value" .Values.dashboard.diagnosticMode.command "context" $) | nindent 12 }}
+          {{- else if .Values.dashboard.command }}
+          command: {{- include "common.tplvalues.render" (dict "value" .Values.dashboard.command "context" $) | nindent 12 }}
           {{- end }}
-          {{- if .Values.dashboardService.diagnosticMode.enabled }}
-          args: {{- include "common.tplvalues.render" (dict "value" .Values.dashboardService.diagnosticMode.args "context" $) | nindent 12 }}
+          {{- if .Values.dashboard.diagnosticMode.enabled }}
+          args: {{- include "common.tplvalues.render" (dict "value" .Values.dashboard.diagnosticMode.args "context" $) | nindent 12 }}
           {{- else if .Values.args }}
-          args: {{- include "common.tplvalues.render" (dict "value" .Values.dashboardService.args "context" $) | nindent 12 }}
+          args: {{- include "common.tplvalues.render" (dict "value" .Values.dashboard.args "context" $) | nindent 12 }}
           {{- end }}
           env:
             - name: INTERSECT_SERVICE_CONFIG
               value: {{ .Values.intersectConfig.filename | default "/app/config.yml" | quote }}
-            {{- if .Values.dashboardService.extraEnvVars }}
-            {{- include "common.tplvalues.render" (dict "value" .Values.dashboardService.extraEnvVars "context" $) | nindent 12 }}
+            {{- if .Values.dashboard.extraEnvVars }}
+            {{- include "common.tplvalues.render" (dict "value" .Values.dashboard.extraEnvVars "context" $) | nindent 12 }}
             {{- end }}
           envFrom:
-            {{- if .Values.dashboardService.extraEnvVarsCM }}
+            {{- if .Values.dashboard.extraEnvVarsCM }}
             - configMapRef:
-                name: {{ include "common.tplvalues.render" (dict "value" .Values.dashboardService.extraEnvVarsCM "context" $) }}
+                name: {{ include "common.tplvalues.render" (dict "value" .Values.dashboard.extraEnvVarsCM "context" $) }}
             {{- end }}
-            {{- if .Values.dashboardService.extraEnvVarsSecret }}
+            {{- if .Values.dashboard.extraEnvVarsSecret }}
             - secretRef:
-                name: {{ include "common.tplvalues.render" (dict "value" .Values.dashboardService.extraEnvVarsSecret "context" $) }}
+                name: {{ include "common.tplvalues.render" (dict "value" .Values.dashboard.extraEnvVarsSecret "context" $) }}
             {{- end }}
           {{- if .Values.resources }}
-          resources: {{- toYaml .Values.dashboardService.resources | nindent 12 }}
+          resources: {{- toYaml .Values.dashboard.resources | nindent 12 }}
           {{- end }}
-          {{- if not .Values.dashboardService.diagnosticMode.enabled }}
-          {{- if .Values.dashboardService.customLivenessProbe }}
-          livenessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.dashboardService.customLivenessProbe "context" $) | nindent 12 }}
+          {{- if not .Values.dashboard.diagnosticMode.enabled }}
+          {{- if .Values.dashboard.customLivenessProbe }}
+          livenessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.dashboard.customLivenessProbe "context" $) | nindent 12 }}
           {{- end }}
-          {{- if .Values.dashboardService.customReadinessProbe }}
-          readinessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.dashboardService.customReadinessProbe "context" $) | nindent 12 }}
+          {{- if .Values.dashboard.customReadinessProbe }}
+          readinessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.dashboard.customReadinessProbe "context" $) | nindent 12 }}
           {{- end }}
-          {{- if .Values.dashboardService.customStartupProbe }}
-          startupProbe: {{- include "common.tplvalues.render" (dict "value" .Values.dashboardService.customStartupProbe "context" $) | nindent 12 }}
+          {{- if .Values.dashboard.customStartupProbe }}
+          startupProbe: {{- include "common.tplvalues.render" (dict "value" .Values.dashboard.customStartupProbe "context" $) | nindent 12 }}
           {{- end }}
           {{- end }}
           {{- if .Values.lifecycleHooks }}
@@ -117,8 +118,10 @@ spec:
           - name: intersect-config
             mountPath: /app/config.yml
             subPath: config.yml
-          {{- if .Values.dashboardService.extraVolumeMounts }}
-          {{- include "common.tplvalues.render" (dict "value" .Values.dashboardService.extraVolumeMounts "context" $) | nindent 12 }}
+          - mountPath: {{ .Values.volumeMount.dashboardPath | quote }}
+            name: "shared-volume"
+          {{- if .Values.dashboard.extraVolumeMounts }}
+          {{- include "common.tplvalues.render" (dict "value" .Values.dashboard.extraVolumeMounts "context" $) | nindent 12 }}
           {{- end }}
   
 
@@ -128,7 +131,7 @@ spec:
             {{- if .Values.containerSecurityContext.enabled }}
             securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
             {{- end }}
-            {{- if .Values..dashboardService.diagnosticMode.enabled }}
+            {{- if .Values.dashboardService.diagnosticMode.enabled }}
             command: {{- include "common.tplvalues.render" (dict "value" .Values.dashboardService.diagnosticMode.command "context" $) | nindent 12 }}
             {{- else if .Values.dashboardService.command }}
             command: {{- include "common.tplvalues.render" (dict "value" .Values.dashboardService.command "context" $) | nindent 12 }}
@@ -174,20 +177,21 @@ spec:
             - name: intersect-config
               mountPath: /app/config.yml
               subPath: config.yml
+            - mountPath: {{ .Values.volumeMount.dashboardServicePath | quote }}
+              name: "shared-volume"
             {{- if .Values.dashboardService.extraVolumeMounts }}
             {{- include "common.tplvalues.render" (dict "value" .Values.dashboardService.extraVolumeMounts "context" $) | nindent 12 }}
             {{- end }}
-          {{- if .Values.dashboardService.sidecars }}
-          {{- include "common.tplvalues.render" ( dict "value" .Values.dashboardService.sidecars "context" $) | nindent 8 }}
+          {{- if .Values.sidecars }}
+          {{- include "common.tplvalues.render" ( dict "value" .Values.sidecars "context" $) | nindent 8 }}
           {{- end }}
-        {{- if .Values.sidecars }}
-        {{- include "common.tplvalues.render" ( dict "value" .Values.sidecars "context" $) | nindent 8 }}
-        {{- end }}   
 
       volumes:
         - name: intersect-config
           secret:
             secretName: {{ template "common.names.fullname" . }}-secret-intersect-config
-        {{- if .Values.dashboardService.extraVolumes }}
-        {{- include "common.tplvalues.render" (dict "value" .Values.dashboardService.extraVolumes "context" $) | nindent 8 }}
-        {{- end }}   
+        - name: "shared-volume"
+          emptyDir: {}
+        {{- if .Values.extraVolumes }}
+        {{- include "common.tplvalues.render" (dict "value" .Values.extraVolumes "context" $) | nindent 8 }}
+        {{- end }}

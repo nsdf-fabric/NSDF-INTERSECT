@@ -29,6 +29,13 @@ podLabels: {}
 podAnnotations: {}
 podAffinityPreset: ""
 podAntiAffinityPreset: soft
+
+### Shared Volume Mount ###
+
+volumeMount:
+  dashboardPath: "/share"
+  dashboardServicePath: "/share"
+
 ### NSDF Diffraction Dashboard ###
 
 dashboard:
@@ -156,11 +163,7 @@ dashboard:
 dashboardService:
   enabled: true
 
-  ### Shared Volume Mount ###
 
-  volumeMount:
-    dashboardPath: "/share"
-    dashboardServicePath: "/share"
 
   ### container image
   image:
