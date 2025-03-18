@@ -420,7 +420,7 @@ class AppState:
         if files:
             if len(files) > 1:
                 # change campaign id
-                # NOTE: No suppport for parallel campaign (sequential only)
+                # NOTE: No support for parallel campaign (sequential only)
                 prev_cid = self.id_campaign
                 for file in files:
                     cid = file.split("_")[0]

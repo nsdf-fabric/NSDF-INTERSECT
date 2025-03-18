@@ -14,6 +14,7 @@ import yaml
 import uuid
 from constants import (
     BRAGG_DATA_VOLUME,
+    INTERSECT_SERVICE_CONFIG,
     TRANSITION_DATA_VOLUME,
     ANDIE_DATA_VOLUME,
     SCIENTIST_CLOUD_VOLUME,
@@ -33,8 +34,6 @@ from pydantic import BaseModel, Field
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-
-CONFIG_SERVICE = "config_service.yaml"
 
 SerializedBase64 = Annotated[bytes, Field(json_schema_extra={"format": "base64"})]
 
@@ -157,7 +156,8 @@ class DashboardCapability(IntersectBaseCapabilityImplementation):
             bragg_file(FileType): the gsa file to process
 
         Side Effects:
-            - Creates the file, if it does not exists
+            - Creates the bragg volume, if it does not exists
+            - Creates the scientist cloud volume, if it does not exists
             - writes the file to the ephemeral bragg volume (stateless)
             - writes the file to the scientist cloud volume (stateful)
         """
@@ -231,10 +231,10 @@ class DashboardCapability(IntersectBaseCapabilityImplementation):
 
         with open(ephemeral_vol_path, "a") as e, open(storage_path, "a") as s:
             e.write(
-                f"{uuid.uuid4()},{next_temperature.timestamp},{next_temperature.data}\n"
+                f"{next_temperature.id},{uuid.uuid4()},{next_temperature.timestamp},{next_temperature.data}\n"
             )
             s.write(
-                f"{uuid.uuid4()},{next_temperature.timestamp},{next_temperature.data}\n"
+                f"{next_temperature.id},{uuid.uuid4()},{next_temperature.timestamp},{next_temperature.data}\n"
             )
 
 
@@ -243,7 +243,8 @@ def dashboard_service():
     Initializes service to query data for the dashboard.
     """
     from_config_file = {}
-    with open(CONFIG_SERVICE) as f:
+    config_path = os.getenv(INTERSECT_SERVICE_CONFIG, "/app/config_default.yaml")
+    with open(config_path) as f:
         from_config_file = yaml.safe_load(f)
 
     config = IntersectServiceConfig(
