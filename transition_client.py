@@ -101,7 +101,7 @@ def generate_transition_msg(
     ylist = generate_y_list(ylen)
     return (
         IntersectDirectMessageParams(
-            destination="nsdf-organization.nsdf-facility.nsdf-system.nsdf-subsystem.nsdf-dashboard-service",
+            destination="nsdf.cloud.diffraction.dashboard.dashboard-service",
             operation="NSDFDashboard.get_transition_data_single",
             payload=TransitionData(
                 id=id,
@@ -116,7 +116,7 @@ def generate_transition_msg(
 def generate_next_temp_msg(id: str, temp: float):
     return (
         IntersectDirectMessageParams(
-            destination="nsdf-organization.nsdf-facility.nsdf-system.nsdf-subsystem.nsdf-dashboard-service",
+            destination="nsdf.cloud.diffraction.dashboard.dashboard-service",
             operation="NSDFDashboard.get_next_temperature",
             payload=NextTemperature(
                 id=id,

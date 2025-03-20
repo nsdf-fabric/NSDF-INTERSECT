@@ -75,7 +75,7 @@ def prepare_bragg_messages(n: int = 1):
         msg = FileType(filename=files[i], file=file_bytes)
         messages.append(
             IntersectDirectMessageParams(
-                destination="nsdf-organization.nsdf-facility.nsdf-system.nsdf-subsystem.nsdf-dashboard-service",
+                destination="nsdf.cloud.diffraction.dashboard.dashboard-service",
                 operation="NSDFDashboard.get_bragg_data",
                 payload=msg,
             )
@@ -85,7 +85,7 @@ def prepare_bragg_messages(n: int = 1):
 
 def prepare_transition_message():
     return IntersectDirectMessageParams(
-        destination="nsdf-organization.nsdf-facility.nsdf-system.nsdf-subsystem.nsdf-dashboard-service",
+        destination="nsdf.cloud.diffraction.dashboard.dashboard-service",
         operation="NSDFDashboard.get_transition_data",
         payload=TransitionData(
             id=str(uuid4()), temp=transition_data[0][0], ylist=transition_data[0][1:]
@@ -95,7 +95,7 @@ def prepare_transition_message():
 
 def prepare_next_temperature_message(val=225.0):
     return IntersectDirectMessageParams(
-        destination="nsdf-organization.nsdf-facility.nsdf-system.nsdf-subsystem.nsdf-dashboard-service",
+        destination="nsdf.cloud.diffraction.dashboard.dashboard-service",
         operation="NSDFDashboard.get_next_temperature",
         payload=NextTemperature(id=str(uuid4()), data=val, timestamp=int(time.time())),
     )

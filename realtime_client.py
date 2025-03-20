@@ -83,7 +83,7 @@ class SampleOrchestrator:
             self.message_stack.append(
                 (
                     IntersectDirectMessageParams(
-                        destination="nsdf-organization.nsdf-facility.nsdf-system.nsdf-subsystem.nsdf-dashboard-service",
+                        destination="nsdf.cloud.diffraction.dashboard.dashboard-service",
                         operation="NSDFDashboard.get_transition_data_single",
                         payload=TransitionData(
                             id=str(id_campaign),
@@ -98,7 +98,7 @@ class SampleOrchestrator:
             self.message_stack.append(
                 (
                     IntersectDirectMessageParams(
-                        destination="nsdf-organization.nsdf-facility.nsdf-system.nsdf-subsystem.nsdf-dashboard-service",
+                        destination="nsdf.cloud.diffraction.dashboard.dashboard-service",
                         operation="NSDFDashboard.get_next_temperature",
                         payload=NextTemperature(
                             id=str(id_campaign),
@@ -123,7 +123,7 @@ class SampleOrchestrator:
                     self.message_stack.append(
                         (
                             IntersectDirectMessageParams(
-                                destination="nsdf-organization.nsdf-facility.nsdf-system.nsdf-subsystem.nsdf-dashboard-service",
+                                destination="nsdf.cloud.diffraction.dashboard.dashboard-service",
                                 operation="NSDFDashboard.get_bragg_data",
                                 payload=msg,
                             ),
