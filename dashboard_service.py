@@ -248,13 +248,6 @@ def dashboard_service():
         from_config_file = yaml.safe_load(f)
 
     config = IntersectServiceConfig(
-        hierarchy=HierarchyConfig(
-            organization="nsdf-organization",
-            facility="nsdf-facility",
-            system="nsdf-system",
-            subsystem="nsdf-subsystem",
-            service="nsdf-dashboard-service",
-        ),
         **from_config_file,
     )
 
