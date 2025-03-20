@@ -1,16 +1,18 @@
 """
-File: realtime_client.py
-Authors: NSDF-INTERSECT Team
+File: transition_client.py
+Author: NSDF-INTERSECT Team
 License: BSD-3
-Description: Test client for all the plots, simulating realtime.
+Description: Test client for the transition plot.
 """
 
-import base64
 import logging
+import random
 import time
-import os
+import argparse
 from uuid import uuid4
 import yaml
+from typing import List, Tuple
+import numpy as np
 
 from intersect_sdk import (
     INTERSECT_JSON_VALUE,
@@ -21,7 +23,7 @@ from intersect_sdk import (
     default_intersect_lifecycle_loop,
 )
 
-from dashboard_service import FileType, NextTemperature, TransitionData
+from dashboard_service import NextTemperature, TransitionData
 
 logging.basicConfig(level=logging.INFO)
 
@@ -62,74 +64,94 @@ transition_data = [
     [200.00, 1.426667976082179, 0.16991445836095545],
 ]
 
-
 CONFIG_CLIENT = "config_client.yaml"
 
 
+def generate_y_list(ylen: int) -> List[float]:
+    ylist = []
+    for _ in range(ylen):
+        ylist.append(random.uniform(0.1, 1.9))
+    return ylist
+
+
+def generate_temperatures(n: int):
+    N, M = 0, 0
+    if n % 2 == 1:
+        N, M = n // 2, (n // 2) + 1
+    else:
+        N = M = n // 2
+
+    min_value = 100
+    start_value = 500
+    noise_level = 0.05
+
+    decreasing = np.linspace(start_value, min_value, N)
+    decreasing += np.random.normal(0, noise_level, len(decreasing))
+
+    increasing = np.linspace(min_value, start_value, M)
+    increasing += np.random.normal(0, noise_level, len(increasing))
+
+    temps = np.concatenate([decreasing, increasing])
+    return temps
+
+
+def generate_transition_msg(
+    id: str, temp: float, ylen: int
+) -> Tuple[IntersectDirectMessageParams, float]:
+    ylist = generate_y_list(ylen)
+    return (
+        IntersectDirectMessageParams(
+            destination="nsdf.cloud.diffraction.dashboard.dashboard-service",
+            operation="NSDFDashboard.get_transition_data_single",
+            payload=TransitionData(
+                id=id,
+                temp=temp,
+                ylist=ylist,
+            ),
+        ),
+        2.0,
+    )
+
+
+def generate_next_temp_msg(id: str, temp: float):
+    return (
+        IntersectDirectMessageParams(
+            destination="nsdf.cloud.diffraction.dashboard.dashboard-service",
+            operation="NSDFDashboard.get_next_temperature",
+            payload=NextTemperature(
+                id=id,
+                data=temp,
+                timestamp=int(time.time()),
+            ),
+        ),
+        2.0,
+    )
+
+
+def generate_campaign(
+    npoints: int, ylen: int
+) -> List[Tuple[IntersectDirectMessageParams, float]]:
+    if npoints < 1 or ylen < 1:
+        raise RuntimeError(
+            f"npoints: {npoints}, y-list len {ylen} cannot generate campaign"
+        )
+
+    campaign = []
+    id = str(uuid4())
+
+    temps = generate_temperatures(npoints)
+    for i in range(npoints):
+        next_temp = temps[i + 1] if i + 1 < npoints else temps[i]
+        campaign.append(generate_transition_msg(id, temps[i], ylen))
+        campaign.append(generate_next_temp_msg(id, next_temp))
+
+    return campaign
+
+
 class SampleOrchestrator:
-    def __init__(self) -> None:
+    def __init__(self, npoint, ylen) -> None:
         """ "Load all gsa files to simulate a stream of data coming in"""
-        self.message_stack = []
-        id_campaign = uuid4()
-        for i in range(len(transition_data)):
-            data = transition_data[i]
-            nextpoint = (
-                transition_data[i + 1][0]
-                if i + 1 != len(transition_data)
-                else transition_data[i][0]
-            )
-
-            # transition data
-            self.message_stack.append(
-                (
-                    IntersectDirectMessageParams(
-                        destination="nsdf.cloud.diffraction.dashboard.dashboard-service",
-                        operation="NSDFDashboard.get_transition_data_single",
-                        payload=TransitionData(
-                            id=str(id_campaign),
-                            temp=data[0],
-                            ylist=data[1:],
-                        ),
-                    ),
-                    2.0,
-                )
-            )
-            # next temperature data
-            self.message_stack.append(
-                (
-                    IntersectDirectMessageParams(
-                        destination="nsdf.cloud.diffraction.dashboard.dashboard-service",
-                        operation="NSDFDashboard.get_next_temperature",
-                        payload=NextTemperature(
-                            id=str(id_campaign),
-                            data=nextpoint,
-                            timestamp=int(time.time()),
-                        ),
-                    ),
-                    2.0,
-                )
-            )
-
-        # bragg data
-        with open("./short_list_of_data.txt") as f:
-            for line in f:
-                filepath = line.strip()
-                with open(filepath, "rb") as file:
-                    msg = FileType(
-                        filename=os.path.basename(filepath),
-                        file=base64.b64encode(file.read()),
-                    )
-                    # wait 5 seconds for each message
-                    self.message_stack.append(
-                        (
-                            IntersectDirectMessageParams(
-                                destination="nsdf.cloud.diffraction.dashboard.dashboard-service",
-                                operation="NSDFDashboard.get_bragg_data",
-                                payload=msg,
-                            ),
-                            2.0,
-                        )
-                    )
+        self.message_stack = generate_campaign(npoint, ylen)
         self.message_stack.reverse()
 
     def client_callback(
@@ -147,15 +169,22 @@ class SampleOrchestrator:
         return IntersectClientCallback(messages_to_send=[message])
 
 
-if __name__ == "__main__":
+def main():
     from_config_file = {}
     with open(CONFIG_CLIENT) as f:
         from_config_file = yaml.safe_load(f)
 
-    orchestrator = SampleOrchestrator()
+    parser = argparse.ArgumentParser(description="Campaign")
+    parser.add_argument("--n", default=10, help="number of points")
+    parser.add_argument("--ny", default=3, help="number of y's")
+    args = parser.parse_args()
+
+    orchestrator = SampleOrchestrator(int(args.n), int(args.ny))
+    initial_messages = [orchestrator.message_stack.pop()[0]]
+
     config = IntersectClientConfig(
         initial_message_event_config=IntersectClientCallback(
-            messages_to_send=[orchestrator.message_stack.pop()[0]]
+            messages_to_send=initial_messages,
         ),
         **from_config_file,
     )
@@ -166,3 +195,7 @@ if __name__ == "__main__":
     default_intersect_lifecycle_loop(
         client,
     )
+
+
+if __name__ == "__main__":
+    main()

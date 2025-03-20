@@ -5,5 +5,7 @@ Chart.lock
 .env.*
 .env
 bragg_volume
+transition_volume
+andie_volume
 scientist_cloud_volume
-state
+

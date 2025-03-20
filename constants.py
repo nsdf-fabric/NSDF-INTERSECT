@@ -1,20 +1,28 @@
+"""
+File: constants.py
+Authors: NSDF-INTERSECT Team
+Description: Constants used across services.
+License: BSD-3
+"""
+
 ###############################
 ########## STATELESS ##########
 ###############################
 
-BRAGG_VOLUME = "bragg_volume"  # scanned by dashboard (bragg plot)
+BRAGG_DATA_VOLUME = "bragg_volume"  # scanned by dashboard (bragg plot)
+TRANSITION_DATA_VOLUME = "transition_volume"  # scanned by dashboard (transition plot)
+ANDIE_DATA_VOLUME = (
+    "andie_volume"  # scanned by dashboard (ANDiE trace in transition plot)
+)
 
 ##############################
 ########## STATEFUL ##########
 ##############################
 
 # VOLUMES
-STATE_VOLUME = "state"  # scanned by dashboard (transition, next temperature)
 SCIENTIST_CLOUD_VOLUME = "scientist_cloud_volume"  # scanned by storage service
 
 # FILES
-TRANSITION_DATA_FILE = "transition_data.txt"
-ANDIE_DATA_FILE = "andie_data.txt"
 RETRY_FILE = "retry.txt"
 
 ############################
@@ -36,7 +44,5 @@ SELECT_SCAN_PERIOD = 45
 # DASHBOARD
 MAX_BANKS = 6
 
-# PLOTS
-BRAGG = "BRAGG"
-TRANSITION = "TRANSITION"
-ANDIE = "ANDIE"
+# SERVICE
+INTERSECT_SERVICE_CONFIG = "INTERSECT_SERVICE_CONFIG"

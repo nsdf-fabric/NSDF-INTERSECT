@@ -38,20 +38,25 @@ services:
       timeout: 10s
     volumes:
       - intersect_bragg_volume:/usr/src/dashboard/bragg_volume/
+      - intersect_transition_volume:/usr/src/dashboard/transition_volume/
+      - intersect_andie_volume:/usr/src/dashboard/andie_volume/
       - intersect_scientist_cloud_volume:/usr/src/dashboard/scientist_cloud_volume
-      - intersect_state:/usr/src/dashboard/state/
   dashboard_service:
     image: "intersect-service:latest"
     ports:
       - "10043:10043"
+    environment:
+      INTERSECT_SERVICE_CONFIG: "/app/config_default.yaml"
     depends_on:
       broker:
         condition: service_healthy
     volumes:
       - intersect_bragg_volume:/usr/src/dashboard_service/bragg_volume/
+      - intersect_transition_volume:/usr/src/dashboard_service/transition_volume/
+      - intersect_andie_volume:/usr/src/dashboard_service/andie_volume/
       - intersect_scientist_cloud_volume:/usr/src/dashboard_service/scientist_cloud_volume
-      - intersect_state:/usr/src/dashboard_service/state/
 volumes:
   intersect_bragg_volume:
-  intersect_state:
+  intersect_transition_volume:
+  intersect_andie_volume:
   intersect_scientist_cloud_volume:

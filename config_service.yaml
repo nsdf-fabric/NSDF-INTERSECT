@@ -4,3 +4,10 @@ brokers:
     host: broker
     port: 1883
     protocol: "mqtt3.1.1"
+
+hierarchy:
+  organization: nsdf
+  facility: cloud
+  system: diffraction
+  subsystem: dashboard
+  service: dashboard-service

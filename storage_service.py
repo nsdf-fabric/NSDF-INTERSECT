@@ -1,3 +1,11 @@
+"""
+File: storage_service.py
+Authors: NSDF-INTERSECT Team
+License: BSD-3
+Description: The storage component exports data to the ScientistCloud
+and serves as the caching layer for stateful features.
+"""
+
 import pathlib
 import dotenv
 import os
@@ -9,7 +17,7 @@ import logging
 import subprocess
 import random
 import concurrent.futures
-from constants import BUCKET_PATH, BRAGG_PATH, SCIENTIST_CLOUD_VOLUME, STORAGE_SCAN_PERIOD, STATE_VOLUME, RETRY_FILE
+from constants import BUCKET_PATH, BRAGG_PATH, SCIENTIST_CLOUD_VOLUME, STORAGE_SCAN_PERIOD, RETRY_FILE
 
 
 logging.basicConfig(level=logging.INFO)
@@ -62,7 +70,7 @@ def upload_with_retry(local_filepath, key, max_retries=5, delay=2) -> str:
                 time.sleep(delay + random.uniform(0, 1))
             else:
                 # write to retry.txt to upload later
-                path = os.path.join(STATE_VOLUME, RETRY_FILE)
+                path = os.path.join(SCIENTIST_CLOUD_VOLUME, RETRY_FILE)
                 os.makedirs(path, exist_ok=True)
                 with open(path, "a") as f:
                     f.write(f"{os.path.basename(local_filepath)}\n")
