@@ -25,6 +25,14 @@ from constants import (
 )
 
 
+import logging
+logger = logging.getLogger(__name__)
+logging.basicConfig(
+    filename='nsdf-intersect-dashboard.log',
+    encoding='utf-8',
+    level=logging.INFO
+)
+
 class AppState:
     def __init__(self):
         # data
@@ -140,8 +148,18 @@ class AppState:
         self.render_bragg_plot()
 
     def load_stateful_files(self) -> DefaultDict[str, str]:
-        files = os.listdir(SCIENTIST_CLOUD_VOLUME)
+        """ Load stateful files from volume for ScientistCloud. """
         stateful_files = defaultdict()
+
+        # Check volume and return if does not exist
+        if not os.path.isdir(SCIENTIST_CLOUD_VOLUME):
+            logger.warning(
+                f"Scientist cloud volume: {SCIENTIST_CLOUD_VOLUME} not found, "
+                "skipping load stateful files..."
+            )
+            return
+
+        files = os.listdir(SCIENTIST_CLOUD_VOLUME)
         if files:
             for file in files:
                 if file.endswith(".gsa"):
@@ -154,6 +172,14 @@ class AppState:
         return stateful_files
 
     def load_workspace(self, filename: str):
+        # Check volume and return if does not exist
+        if not os.path.isdir(BRAGG_DATA_VOLUME):
+            logger.warning(
+                f"Bragg volume: {BRAGG_DATA_VOLUME} not found, "
+                "skipping load workspace..."
+            )
+            return
+
         self.wksp = load_gsas(os.path.join(BRAGG_DATA_VOLUME, filename))
         self.name = self.wksp.name()
         self.wksp_title = self.wksp.getTitle()
@@ -161,6 +187,14 @@ class AppState:
 
     def render_transition_content(self):
         temp, ylist, traces = [], [], []
+        # Check volume and return if does not exist
+        if not os.path.isdir(STATE_VOLUME):
+            logger.warning(
+                f"State volume: {STATE_VOLUME} not found, "
+                "skipping transition content..."
+            )
+            return
+
         maxY = 0.0
         with open(os.path.join(TRANSITION_DATA_VOLUME, f"{self.id_campaign}_transition.txt")) as f:
             for line in f:
@@ -260,7 +294,7 @@ class AppState:
             self.lastUpdate = datetime.now().strftime("%B %d, %Y %I:%M:%S %p UTC")
             # patching header
             self.all_banks_header_md.object = f"""
-            <div style="border: 4px solid #00662c; padding: 8px; background-color: #e0f7e0; display: inline-block; 
+            <div style="border: 4px solid #00662c; padding: 8px; background-color: #e0f7e0; display: inline-block;
                 border-radius: 15px; font-size: 18px; font-family: Arial, sans-serif;">
             🔴 <strong>Live:</strong> {self.lastUpdate}
             </div>
@@ -350,7 +384,7 @@ class AppState:
             ).strftime("%B %d, %Y %I:%M:%S %p UTC")
 
             self.stateful_plot_header_md.object = f"""
-            <div style="border: 4px solid #005b8c; padding: 8px; background-color: #e0f0f7; display: inline-block; 
+            <div style="border: 4px solid #005b8c; padding: 8px; background-color: #e0f0f7; display: inline-block;
                 border-radius: 15px; font-size: 18px; font-family: Arial, sans-serif;">
             <strong>Date:</strong> {human_readable_timestamp}
             </div>
@@ -402,6 +436,13 @@ class AppState:
 
     # LIFECYCLE METHODS
     def check_new_bragg_files(self):
+        # Check volume and return if does not exist
+        if not os.path.isdir(BRAGG_DATA_VOLUME):
+            logger.warning(
+                "Bragg volume: {BRAGG_DATA_VOLUME} not found, skipping checks..."
+            )
+            return
+
         files = os.listdir(BRAGG_DATA_VOLUME)
         if files:
             files = sorted(files, key=lambda f: int(f.split("_")[0]))
