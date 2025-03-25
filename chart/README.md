@@ -4,33 +4,40 @@ Most templates are based off of the [Bitnami Charts Template](https://github.com
 
 We also use the Bitnami Common library to try and standardize some boilerplate across all charts.
 
-## Configure config yaml
+## Configure config yaml + node port
 
 Example of `intersectConfig` for values.yaml:
 
 ```yaml
 intersectConfig:
-   intersect:
-     data_stores:
-       minio:
-         - host: minio
-           username: DATA_STORE_USER
-           password: DATA_STORE_PASSWORD
-           port: 9000
+  data_stores:
+    minio:
+      - host: minio
+        username: DATA_STORE_USER
+        password: DATA_STORE_PASSWORD
+        port: 9000
 
-     brokers:
-       - host: broker
-         username: BROKER_USER
-         password: BROKER_PASSWORD
-         port: 1883
-         protocol: mqtt3.1.1
+  brokers:
+    - host: broker
+      username: BROKER_USER
+      password: BROKER_PASSWORD
+      port: 1883
+      protocol: mqtt3.1.1
 
-     hierarchy:
-       organization: nsdf
-       facility: cloud
-       system: diffraction
-       subsystem: dashboard
-       service: dashboard-service 
+  hierarchy:
+    organization: nsdf
+    facility: cloud
+    system: diffraction
+    subsystem: dashboard
+    service: dashboard-service
+```
+
+Example of node port for dashboard (served on 30180 of cluster):
+```
+dashboard:
+  service:
+    type: NodePort
+    nodePort: 30180
 ```
 
 ## Linting
