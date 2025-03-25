@@ -93,8 +93,10 @@ dashboard:
 
   replicaCount: 1
 
-  ports:
-    ui: 8080
+  containerPorts:
+    http: 10042
+
+  extraContainerPorts: []
 
   # TODO figure out halfway decent probes
 
@@ -138,6 +140,7 @@ dashboard:
 
   service:
     type: ClusterIP
+    port: 10042
     nodePort: ""
     clusterIP: ""
     loadBalancerIP: ""
