@@ -30,6 +30,7 @@ services:
       - broker
     environment:
       BOKEH_ALLOW_WS_ORIGIN: "*"
+      INTERSECT_DASHBOARD_CONFIG: "/app/config_dashboard_default.yaml"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:10042/"]
       interval: 10s

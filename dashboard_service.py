@@ -13,15 +13,11 @@ from typing import List
 import yaml
 import uuid
 from constants import (
-    BRAGG_DATA_VOLUME,
     INTERSECT_SERVICE_CONFIG,
-    TRANSITION_DATA_VOLUME,
-    ANDIE_DATA_VOLUME,
-    SCIENTIST_CLOUD_VOLUME,
+    INTERSECT_DASHBOARD_CONFIG,
 )
 
 from intersect_sdk import (
-    HierarchyConfig,
     IntersectBaseCapabilityImplementation,
     IntersectService,
     IntersectServiceConfig,
@@ -81,7 +77,7 @@ class NextTemperature(BaseModel):
     timestamp: int
 
 
-def last_record(cid: str) -> TransitionData:
+def last_record(volume: str, cid: str) -> TransitionData:
     """
     Retrieve the last record from the transition file for the given cid.
 
@@ -94,9 +90,7 @@ def last_record(cid: str) -> TransitionData:
     Raises:
         OSError: If an error occurs while retrieving the last record on the file.
     """
-    transition_state_path = os.path.join(
-        TRANSITION_DATA_VOLUME, f"{cid}_transition.txt"
-    )
+    transition_state_path = os.path.join(volume, f"{cid}_transition.txt")
     tdata = TransitionData(id="", temp=0, ylist=[])
     if not os.path.exists(transition_state_path):
         return tdata
@@ -142,6 +136,20 @@ class DashboardCapability(IntersectBaseCapabilityImplementation):
 
     intersect_sdk_capability_name = "NSDFDashboard"
 
+    def __init__(self) -> None:
+        super().__init__()
+        self.config = {}
+        config_path = os.getenv(
+            INTERSECT_DASHBOARD_CONFIG, "/app/config_dashboard_default.yaml"
+        )
+        try:
+            with open(config_path) as f:
+                self.config = yaml.safe_load(f)
+        except Exception as e:
+            logger.error(
+                f"could not initialize dashboard service, configuration path of dashboard does not exists: {e}"
+            )
+
     @intersect_status()
     def status(self) -> str:
         """Basic status function which returns a hard-coded string."""
@@ -162,9 +170,12 @@ class DashboardCapability(IntersectBaseCapabilityImplementation):
             - writes the file to the scientist cloud volume (stateful)
         """
         timestamp = int(time.time())
-        path = os.path.join(BRAGG_DATA_VOLUME, f"{timestamp}_{bragg_file.filename}")
+        path = os.path.join(
+            self.config["volumes"]["bragg_volume"], f"{timestamp}_{bragg_file.filename}"
+        )
         storage_path = os.path.join(
-            SCIENTIST_CLOUD_VOLUME, f"{timestamp}_{bragg_file.filename}"
+            self.config["volumes"]["scientist_cloud_volume"],
+            f"{timestamp}_{bragg_file.filename}",
         )
 
         os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -191,13 +202,19 @@ class DashboardCapability(IntersectBaseCapabilityImplementation):
         """
 
         file_id = f"{transition_data.id}_transition.txt"
-        ephemeral_vol_path = os.path.join(TRANSITION_DATA_VOLUME, file_id)
-        storage_path = os.path.join(SCIENTIST_CLOUD_VOLUME, file_id)
+        ephemeral_vol_path = os.path.join(
+            self.config["volumes"]["transition_volume"], file_id
+        )
+        storage_path = os.path.join(
+            self.config["volumes"]["scientist_cloud_volume"], file_id
+        )
         os.makedirs(os.path.dirname(ephemeral_vol_path), exist_ok=True)
         os.makedirs(os.path.dirname(storage_path), exist_ok=True)
 
         try:
-            latest_record = last_record(file_id)
+            latest_record = last_record(
+                self.config["volumes"]["transition_volume"], file_id
+            )
             ylist = ",".join(map(str, transition_data.ylist))
 
             if latest_record.id == "" or isValidTransitionRecord(
@@ -224,8 +241,12 @@ class DashboardCapability(IntersectBaseCapabilityImplementation):
             - writes the file to the scientist cloud volume (stateful)
 
         """
-        ephemeral_vol_path = os.path.join(ANDIE_DATA_VOLUME, "andie.txt")
-        storage_path = os.path.join(SCIENTIST_CLOUD_VOLUME, "andie.txt")
+        ephemeral_vol_path = os.path.join(
+            self.config["volumes"]["andie_volume"], "andie.txt"
+        )
+        storage_path = os.path.join(
+            self.config["volumes"]["scientist_cloud_volume"], "andie.txt"
+        )
         os.makedirs(os.path.dirname(ephemeral_vol_path), exist_ok=True)
         os.makedirs(os.path.dirname(storage_path), exist_ok=True)
 
