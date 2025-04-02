@@ -5,9 +5,11 @@ WORKDIR /usr/src/storage_service
 
 RUN python -m pip install python-dotenv boto3==1.35.99
 
-COPY storage_service.py ./storage_service.py
-COPY constants.py ./constants.py
+COPY ./services/storage_service.py ./storage_service.py
+COPY ./services/constants.py ./constants.py
 
 EXPOSE 10044
 
 ENTRYPOINT ["python" ,"storage_service.py"]
+
+

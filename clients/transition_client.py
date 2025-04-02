@@ -23,7 +23,7 @@ from intersect_sdk import (
     default_intersect_lifecycle_loop,
 )
 
-from dashboard_service import NextTemperature, TransitionData
+from schema import TransitionData, NextTemperature
 
 logging.basicConfig(level=logging.INFO)
 

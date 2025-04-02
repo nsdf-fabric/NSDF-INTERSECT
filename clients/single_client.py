@@ -23,7 +23,7 @@ from intersect_sdk import (
     default_intersect_lifecycle_loop,
 )
 
-from dashboard_service import FileType, TransitionData, NextTemperature
+from schema import FileType, TransitionData, NextTemperature
 
 logging.basicConfig(level=logging.INFO)
 CONFIG_CLIENT = "config_client.yaml"

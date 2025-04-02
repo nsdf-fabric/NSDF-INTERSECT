@@ -18,8 +18,11 @@ def _wkspname(filename: Path) -> str:
 
 
 def load_gsas(
-        filename: FilePath, units: str = "dSpacing", allowCaching: bool = False, unique=False
-    ) ->  Workspace2D:
+    filename: FilePath,
+    units: str = "dSpacing",
+    allowCaching: bool = False,
+    unique=False,
+) -> Workspace2D:
     """https://docs.mantidproject.org/nightly/algorithms/LoadGSS-v1.html
     https://docs.mantidproject.org/nightly/algorithms/ConvertUnits-v1.html"""
     filepath = Path(filename)
@@ -38,15 +41,23 @@ def load_gsas(
         wksp = mtd[wksp_name]
     else:
         try:
-            wksp = LoadGSS(Filename=str(filepath), OutputWorkspace=wksp_name, UseBankIDasSpectrumNumber=True)
+            wksp = LoadGSS(
+                Filename=str(filepath),
+                OutputWorkspace=wksp_name,
+                UseBankIDasSpectrumNumber=True,
+            )
         except IndexError as index_err:
             logging.error(f"Failed to load {str(filepath)} to {wksp_name}")
             raise index_err
         except ValueError as value_err:
             logging.error(f"Failed to load {str(filepath)} to {wksp_name}")
             raise value_err
-        wksp = ConvertUnits(InputWorkspace=wksp_name, OutputWorkspace=wksp_name, Target=units, EMode="Elastic")
+        wksp = ConvertUnits(
+            InputWorkspace=wksp_name,
+            OutputWorkspace=wksp_name,
+            Target=units,
+            EMode="Elastic",
+        )
         wksp = ConvertToPointData(InputWorkspace=wksp_name, OutputWorkspace=wksp_name)
 
     return wksp
-

@@ -1,3 +1,7 @@
+# Local
+dev:
+	@panel serve ./src/dashboard.py --show --dev
+# Docker
 dashboard:
 	@docker build --platform linux/amd64 -t intersect-dashboard -f Dockerfile.dashboard .
 
@@ -21,3 +25,4 @@ undeploy:
 
 rmvolumes:
 	@docker volume rm nsdf-intersect_intersect_bragg_volume nsdf-intersect_intersect_transition_volume nsdf-intersect_intersect_andie_volume nsdf-intersect_intersect_scientist_cloud_volume
+

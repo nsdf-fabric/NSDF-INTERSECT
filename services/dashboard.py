@@ -6,21 +6,22 @@ Description: The UI/visualization component for monitoring experiments.
 """
 
 import os
+import logging
 from typing import List, DefaultDict
 from collections import defaultdict
 import panel as pn
-from load_gsas import load_gsas
+from panel.template import MaterialTemplate
 import plotly.graph_objects as go
 from datetime import datetime, timezone
 import numpy as np
 import yaml
+from mantid_utils import load_gsas
 from constants import (
     MAX_BANKS,
     INTERSECT_DASHBOARD_CONFIG
 )
 
 
-import logging
 logger = logging.getLogger(__name__)
 logging.basicConfig(
     filename='nsdf-intersect-dashboard.log',
@@ -513,7 +514,7 @@ class AppState:
         self.select_bragg_file.options = self.files
 
 
-def main():
+def App() -> MaterialTemplate:
     pn.extension("plotly")
     app_state = AppState()
 
@@ -523,7 +524,7 @@ def main():
             app_state.config = yaml.safe_load(f)
     except Exception as e:
         logger.error(f"could not initialize dashboard, configuration path does not exists: {e}")
-        return
+        raise FileNotFoundError(f"could to initialize dashboard, configuration path does not exists {e}")
 
     logger.info("initialized dashboard configuration")
 
@@ -591,8 +592,12 @@ def main():
     pn.state.add_periodic_callback(
         callback=app_state.poll_stateful_files, period=app_state.config['scan_period']['select_scan_period']* 1000
     )
+    return template
 
-    template.servable()
 
-
-main()
+if __name__.startswith("bokeh"):
+    try:
+        app = App()
+        app.servable()
+    except Exception as e:
+        logger.error(f"dashboard could not be initialized {e}")
