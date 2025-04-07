@@ -15,7 +15,7 @@ import plotly.graph_objects as go
 from datetime import datetime, timezone
 import numpy as np
 import yaml
-from mantid_utils import load_gsas
+from gsa_loader import load_gsa_file
 from constants import (
     MAX_BANKS,
     INTERSECT_DASHBOARD_CONFIG
@@ -38,14 +38,11 @@ class AppState:
         }}
         # data
         self.files = defaultdict()
+        self.bragg_data = defaultdict()
         self.current_bragg_file = ""
         self.id_campaign = ""
         self.id_transition = ""
         self.id_andie = ""
-        self.wksp = None
-        self.wksp_title = ""
-        self.name = "No file"
-        self.nEvents = 0
         self.lastUpdate = datetime.now().strftime("%B %d, %Y %I:%M:%S %p UTC")
         self.next_temperature = 0.00
         self.next_temperature_timestamp = 0
@@ -164,10 +161,7 @@ class AppState:
 
     def _load_workspace(self, filename: str):
         """load a gsas file into a workspace"""
-        self.wksp = load_gsas(os.path.join(self.config['volumes']['bragg_volume'], filename))
-        self.name = self.wksp.name()
-        self.wksp_title = self.wksp.getTitle()
-        self.nEvents = self.wksp.getNEvents()
+        self.bragg_data = load_gsa_file(os.path.join(self.config['volumes']['bragg_volume'], filename))
 
     def _render_transition_content(self):
         """renders the transition plot using transition volume"""
@@ -266,7 +260,7 @@ class AppState:
 
     def _render_bragg_plot(self):
         """renders a gsas workspace in the bragg plot and by bank tabs"""
-        if self.wksp:
+        if self.current_bragg_file != "":
             self.lastUpdate = datetime.now().strftime("%B %d, %Y %I:%M:%S %p UTC")
             # patching header
             self.all_banks_header_md.object = f"""
@@ -277,27 +271,25 @@ class AppState:
             """
 
             traces, self.maxX, self.maxY = [], 0.0, 0.0
-
-            for bank_number in self.wksp.getSpectrumNumbers():
-                i = self.wksp.getIndexFromSpectrumNumber(bank_number)
-                datax, datay = self.wksp.dataX(i), self.wksp.dataY(i)
-
-                bank_data = self.gen_figure_data(
-                    i, name=f"{self.wksp.getName()} (Bank {bank_number})"
+            for wksp_index, arr in self.bragg_data.items():
+                scatter_line = go.Scatter(
+                    x=arr[0],
+                    y=arr[1],
+                    name=f"{self.current_bragg_file}: bank {wksp_index}",
+                    line=dict(width=2),
                 )
                 # setting plot limits
-                self.minX = min(self.minX, datax.min())
-                self.maxX = max(self.maxX, datax.max())
-                self.minY = min(self.minX, datay.min())
-                self.maxY = max(self.maxY, datay.max())
+                self.minX = min(self.minX, np.min(arr[0]))
+                self.maxX = max(self.maxX, np.max(arr[0]))
+                self.minY = min(self.minX, np.min(arr[1]))
+                self.maxY = max(self.maxY, np.max(arr[1]))
 
                 # patching individual bank plot
-                self.bragg_data_by_bank_dict[i]["data"] = bank_data["data"]
-                self.bragg_data_by_bank_plots[i].object = self.bragg_data_by_bank_dict[
-                    i
+                self.bragg_data_by_bank_dict[wksp_index-1]["data"] = scatter_line
+                self.bragg_data_by_bank_plots[wksp_index-1].object = self.bragg_data_by_bank_dict[
+                    wksp_index-1
                 ]
-
-                traces.append(bank_data["data"])
+                traces.append(scatter_line)
 
             # setting slider limits
             self.xlim_slider.start = self.minX
@@ -306,9 +298,9 @@ class AppState:
             self.ylim_slider.end = self.ylim_slider.value = self.maxY
             # patching bragg data plot
             self.bragg_data_dict["data"] = traces
-            self.bragg_data_dict["layout"].xaxis.range = [self.minX, 8.0]
-            self.bragg_data_dict["layout"].yaxis.range = [self.minY, 3.0]
-            self.bragg_data_dict["layout"].title.text = self.wksp_title
+            self.bragg_data_dict["layout"].xaxis.range = [self.minX, self.maxX]
+            self.bragg_data_dict["layout"].yaxis.range = [self.minY, 80]
+            self.bragg_data_dict["layout"].title.text = self.current_bragg_file.split(".")[0]
             self.bragg_data_plot.object = self.bragg_data_dict
 
     def _render_bragg_content(self, name):
@@ -345,19 +337,18 @@ class AppState:
         """updates the stateful plot when the select widget is triggered"""
         if file != "":
             traces = []
-            wksp = load_gsas(os.path.join(self.config['volumes']['scientist_cloud_volume'], file))
-            for bank_number in wksp.getSpectrumNumbers():
-                i = wksp.getIndexFromSpectrumNumber(bank_number)
-                dataX, dataY = wksp.dataX(i), wksp.dataY(i)
+            bragg_data = load_gsa_file(os.path.join(self.config['volumes']['scientist_cloud_volume'], file))
+            for wksp_index, data in bragg_data.items():
+                name = file.split(".")[0]
                 traces.append(
                     go.Scatter(
-                        x=dataX,
-                        y=dataY,
-                        name=f"{wksp.getName()} (Bank {i})",
+                        x=data[0],
+                        y=data[1],
+                        name=f"{name} (Bank {wksp_index})",
                         line=dict(width=2),
                     )
                 )
-            epoch = int(wksp.getName().split("_")[0])
+            epoch = int(file.split("_")[0])
             human_readable_timestamp = datetime.fromtimestamp(
                 epoch, tz=timezone.utc
             ).strftime("%B %d, %Y %I:%M:%S %p UTC")
@@ -370,10 +361,9 @@ class AppState:
             """
 
             self.stateful_plot_data_dict["data"] = traces
-            self.stateful_plot_data_dict["layout"].xaxis.range = [0, 8.0]
-            self.stateful_plot_data_dict["layout"].yaxis.range = [0, 3.0]
+            self.stateful_plot_data_dict["layout"].yaxis.range = [0, 80]
             self.stateful_plot_data_dict["layout"].title.text = (
-                f"Bragg Data: {wksp.getName()}"
+                f"Bragg Data: {file.split('.')[0]}"
             )
             self.stateful_plot.object = self.stateful_plot_data_dict
 

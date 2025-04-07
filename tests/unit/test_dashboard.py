@@ -102,10 +102,7 @@ class TestLoaders:
 
     def test_load_workspace(self, configured_app):
         configured_app._load_workspace("1743619484_nom168366tof.gsa")
-        assert configured_app.wksp is not None
-        assert configured_app.name == "1743619484_nom168366tofn"
-        assert "Fe2O3_ramp_to_500K" in configured_app.wksp_title
-        assert configured_app.nEvents != 0
+        assert len(configured_app.bragg_data) == 6
 
 
 class TestRenderers:
@@ -116,9 +113,6 @@ class TestRenderers:
         assert len(configured_app.bragg_data_dict["data"]) == 6
         assert configured_app.all_banks_header_md != """"""
         assert configured_app.bragg_data_dict["layout"].title.text != ""
-        assert (
-            "Fe2O3_ramp_to_500K" in configured_app.bragg_data_dict["layout"].title.text
-        )
         assert configured_app.minX >= 0.0
         assert configured_app.minY >= 0.0
 
