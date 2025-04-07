@@ -11,5 +11,3 @@ COPY ./services/constants.py ./constants.py
 EXPOSE 10044
 
 ENTRYPOINT ["python" ,"storage_service.py"]
-
-

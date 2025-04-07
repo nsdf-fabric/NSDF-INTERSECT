@@ -1,3 +1,10 @@
+"""
+File: gsa_loader.py
+Author: NSDF-INTERSECT Team
+License: BSD-3
+Description: The gsa file parser
+"""
+
 import numpy as np
 from collections import defaultdict
 from typing import DefaultDict
@@ -13,7 +20,6 @@ logging.basicConfig(
 def load_gsa_file(path: str) -> DefaultDict:
     gsa_data = defaultdict()
     try:
-
         with open(path, "r") as f:
             tof, counts, errors = [], [], []
             bank_id = -1

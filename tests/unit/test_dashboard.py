@@ -101,8 +101,9 @@ class TestLoaders:
         assert len(timestamp_to_filename) == 5
 
     def test_load_workspace(self, configured_app):
-        configured_app._load_workspace("1743619484_nom168366tof.gsa")
-        assert len(configured_app.bragg_data) == 6
+        configured_app._load_workspace("1743619484_NOM168366tof.gsa")
+        assert len(configured_app.bragg_data.keys()) == 6
+        assert len(configured_app.bragg_data[1]) == 3
 
 
 class TestRenderers:

@@ -29,4 +29,3 @@ EXPOSE 10042
 ENV BOKEH_ALLOW_WS_ORIGIN="*"
 
 CMD ["conda", "run", "--no-capture-output", "-n", "espd_mantid", "python", "-m", "panel", "serve", "dashboard.py", "--address", "0.0.0.0", "--allow-websocket-origin", "*", "--port", "10042"]
-

@@ -4,6 +4,7 @@
 <p align="center">
  <a href="https://www.python.org/downloads/release/python-310/"><img alt="Python 3.10" src="https://img.shields.io/badge/Python-3.10-3776AB.svg?style=flat&logo=python&logoColor=white"></a>
  <a href="https://www.docker.com"><img alt="Docker" src="https://badges.aleen42.com/src/docker.svg"></a>
+ <img src="https://github.com/nsdf-fabric/NSDF-INTERSECT/actions/workflows/test.yml/badge.svg" alt="test status badge">
  <img src="https://github.com/nsdf-fabric/NSDF-INTERSECT/actions/workflows/publish.yml/badge.svg" alt="publish status badge">
  <img src="https://github.com/nsdf-fabric/NSDF-INTERSECT/actions/workflows/deploy-linode.yml/badge.svg" alt="linode intersect chart cluster deployment status badge">
 </p>

@@ -508,7 +508,7 @@ def App() -> MaterialTemplate:
     pn.extension("plotly")
     app_state = AppState()
 
-    config_path = os.getenv(INTERSECT_DASHBOARD_CONFIG, "./config_dashboard.yaml")
+    config_path = os.getenv(INTERSECT_DASHBOARD_CONFIG, "/app/config_dashboard_default.yaml")
     try:
         with open(config_path) as f:
             app_state.config = yaml.safe_load(f)

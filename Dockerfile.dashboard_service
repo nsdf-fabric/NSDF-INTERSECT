@@ -14,6 +14,3 @@ COPY ./config/config_dashboard.yaml /app/config_dashboard_default.yaml
 EXPOSE 10043
 
 ENTRYPOINT ["python", "dashboard_service.py"]
-
-
-

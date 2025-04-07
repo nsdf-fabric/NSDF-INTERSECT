@@ -26,7 +26,7 @@ from intersect_sdk import (
 from schema import FileType, TransitionData, NextTemperature
 
 logging.basicConfig(level=logging.INFO)
-CONFIG_CLIENT = "config_client.yaml"
+CONFIG_CLIENT = "config/config_client.yaml"
 
 transition_data = [
     [284.89, 0.9353496748096445, 1.5583828040832086],
