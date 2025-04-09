@@ -1,0 +1,198 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "common.names.fullname" . }}
+  namespace: {{ include "common.names.namespace" . | quote }}
+  labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  {{- if .Values.updateStrategy }}
+  strategy: {{- toYaml .Values.updateStrategy | nindent 4 }}
+  {{- end }}
+  {{- $podLabels := merge .Values.podLabels .Values.commonLabels }}
+  selector:
+    matchLabels: {{- include "common.labels.matchLabels" ( dict "customLabels" $podLabels "context" $ ) | nindent 6 }}
+  template:  
+    metadata:
+      annotations: 
+        checksum/config: {{ .Values.intersectConfig | toYaml | sha256sum }}
+        {{- if .Values.podAnnotations }}
+        {{- include "common.tplvalues.render" (dict "value" .Values.podAnnotations "context" $) | nindent 8 }}
+        {{- end }}
+      labels: {{- include "common.labels.standard" ( dict "customLabels" $podLabels "context" $ ) | nindent 8 }}
+    spec:
+      serviceAccountName: {{ template "nsdf-intersect-dashboard.serviceAccountName" . }}
+      {{- include "nsdf-intersect-dashboard.imagePullSecrets" . | nindent 6 }}
+      {{- if .Values.hostAliases }}
+      hostAliases: {{- include "common.tplvalues.render" (dict "value" .Values.hostAliases "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.affinity }}
+      affinity: {{- include "common.tplvalues.render" ( dict "value" .Values.affinity "context" $) | nindent 8 }}
+      {{- else }}
+      affinity:
+        podAffinity: {{- include "common.affinities.pods" (dict "type" .Values.podAffinityPreset "customLabels" $podLabels "context" $) | nindent 10 }}
+        podAntiAffinity: {{- include "common.affinities.pods" (dict "type" .Values.podAntiAffinityPreset "customLabels" $podLabels "context" $) | nindent 10 }}
+        nodeAffinity: {{- include "common.affinities.nodes" (dict "type" .Values.nodeAffinityPreset.type "key" .Values.nodeAffinityPreset.key "values" .Values.nodeAffinityPreset.values) | nindent 10 }}
+      {{- end }}
+      {{- if .Values.nodeSelector }}
+      nodeSelector: {{- include "common.tplvalues.render" ( dict "value" .Values.nodeSelector "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.tolerations }}
+      tolerations: {{- include "common.tplvalues.render" (dict "value" .Values.tolerations "context" .) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.priorityClassName }}
+      priorityClassName: {{ .Values.priorityClassName | quote }}
+      {{- end }}
+      {{- if .Values.schedulerName }}
+      schedulerName: {{ .Values.schedulerName | quote }}
+      {{- end }}
+      {{- if .Values.topologySpreadConstraints }}
+      topologySpreadConstraints: {{- include "common.tplvalues.render" (dict "value" .Values.topologySpreadConstraints "context" .) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.podSecurityContext.enabled }}
+      securityContext: {{- omit .Values.podSecurityContext "enabled" | toYaml | nindent 8 }}
+      {{- end }}
+      {{- if .Values.terminationGracePeriodSeconds }}
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+      {{- end }}
+      {{- if .Values.initContainers }}
+      initContainers:
+        {{- include "common.tplvalues.render" (dict "value" .Values.initContainers "context" $) | nindent 8 }}
+      {{- end }}
+
+      containers:
+        - name: {{ .Chart.Name }}-dashboard
+          image: {{ template "nsdf-intersect-dashboard.dashboard.image" . }}
+          imagePullPolicy: {{ .Values.dashboard.image.pullPolicy }}
+          {{- if .Values.containerSecurityContext.enabled }}
+          securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if .Values.dashboard.diagnosticMode.enabled }}
+          command: {{- include "common.tplvalues.render" (dict "value" .Values.dashboard.diagnosticMode.command "context" $) | nindent 12 }}
+          {{- else if .Values.dashboard.command }}
+          command: {{- include "common.tplvalues.render" (dict "value" .Values.dashboard.command "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.dashboard.diagnosticMode.enabled }}
+          args: {{- include "common.tplvalues.render" (dict "value" .Values.dashboard.diagnosticMode.args "context" $) | nindent 12 }}
+          {{- else if .Values.args }}
+          args: {{- include "common.tplvalues.render" (dict "value" .Values.dashboard.args "context" $) | nindent 12 }}
+          {{- end }}
+          env:
+            {{- if .Values.dashboard.extraEnvVars }}
+            {{- include "common.tplvalues.render" (dict "value" .Values.dashboard.extraEnvVars "context" $) | nindent 12 }}
+            {{- end }}
+          envFrom:
+            {{- if .Values.dashboard.extraEnvVarsCM }}
+            - configMapRef:
+                name: {{ include "common.tplvalues.render" (dict "value" .Values.dashboard.extraEnvVarsCM "context" $) }}
+            {{- end }}
+            {{- if .Values.dashboard.extraEnvVarsSecret }}
+            - secretRef:
+                name: {{ include "common.tplvalues.render" (dict "value" .Values.dashboard.extraEnvVarsSecret "context" $) }}
+            {{- end }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.dashboard.containerPorts.http }}
+            {{- if .Values.dashboard.extraContainerPorts }}
+            {{- include "common.tplvalues.render" (dict "value" .Values.dashboard.extraContainerPorts "context" $) | nindent 12 }}
+            {{- end }}
+          {{- if .Values.resources }}
+          resources: {{- toYaml .Values.dashboard.resources | nindent 12 }}
+          {{- end }}
+          {{- if not .Values.dashboard.diagnosticMode.enabled }}
+          {{- if .Values.dashboard.customLivenessProbe }}
+          livenessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.dashboard.customLivenessProbe "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.dashboard.customReadinessProbe }}
+          readinessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.dashboard.customReadinessProbe "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.dashboard.customStartupProbe }}
+          startupProbe: {{- include "common.tplvalues.render" (dict "value" .Values.dashboard.customStartupProbe "context" $) | nindent 12 }}
+          {{- end }}
+          {{- end }}
+          {{- if .Values.lifecycleHooks }}
+          lifecycle: {{- include "common.tplvalues.render" (dict "value" .Values.lifecycleHooks "context" $) | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: shared-volume
+              mountPath: {{ .Values.volumeMount.dashboardPath | quote }}
+          {{- if .Values.dashboard.extraVolumeMounts }}
+          {{- include "common.tplvalues.render" (dict "value" .Values.dashboard.extraVolumeMounts "context" $) | nindent 12 }}
+          {{- end }}
+  
+
+        - name: {{ .Chart.Name }}-dashboard-service
+          image: {{ template "nsdf-intersect-dashboard.dashboardService.image" . }}
+          imagePullPolicy: {{ .Values.dashboardService.image.pullPolicy }}
+          {{- if .Values.containerSecurityContext.enabled }}
+          securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if .Values.dashboardService.diagnosticMode.enabled }}
+          command: {{- include "common.tplvalues.render" (dict "value" .Values.dashboardService.diagnosticMode.command "context" $) | nindent 12 }}
+          {{- else if .Values.dashboardService.command }}
+          command: {{- include "common.tplvalues.render" (dict "value" .Values.dashboardService.command "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.dashboardService.diagnosticMode.enabled }}
+          args: {{- include "common.tplvalues.render" (dict "value" .Values.dashboardService.diagnosticMode.args "context" $) | nindent 12 }}
+          {{- else if .Values.args }}
+          args: {{- include "common.tplvalues.render" (dict "value" .Values.dashboardService.args "context" $) | nindent 12 }}
+          {{- end }}
+          env:
+            - name: INTERSECT_SERVICE_CONFIG
+              value: {{ .Values.intersectConfig.filename | default "/app/config.yaml" | quote }}
+            {{- if .Values.dashboardService.extraEnvVars }}
+            {{- include "common.tplvalues.render" (dict "value" .Values.dashboardService.extraEnvVars "context" $) | nindent 12 }}
+            {{- end }}
+          envFrom:
+            {{- if .Values.dashboardService.extraEnvVarsCM }}
+            - configMapRef:
+                name: {{ include "common.tplvalues.render" (dict "value" .Values.dashboardService.extraEnvVarsCM "context" $) }}
+            {{- end }}
+            {{- if .Values.dashboardService.extraEnvVarsSecret }}
+            - secretRef:
+                name: {{ include "common.tplvalues.render" (dict "value" .Values.dashboardService.extraEnvVarsSecret "context" $) }}
+            {{- end }}
+          {{- if .Values.resources }}
+          resources: {{- toYaml .Values.dashboardService.resources | nindent 12 }}
+          {{- end }}
+          {{- if not .Values.dashboardService.diagnosticMode.enabled }}
+          {{- if .Values.dashboardService.customLivenessProbe }}
+          livenessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.dashboardService.customLivenessProbe "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.dashboardService.customReadinessProbe }}
+          readinessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.dashboardService.customReadinessProbe "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.dashboardService.customStartupProbe }}
+          startupProbe: {{- include "common.tplvalues.render" (dict "value" .Values.dashboardService.customStartupProbe "context" $) | nindent 12 }}
+          {{- end }}
+          {{- end }}
+          {{- if .Values.lifecycleHooks }}
+          lifecycle: {{- include "common.tplvalues.render" (dict "value" .Values.lifecycleHooks "context" $) | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+          - name: intersect-config
+            mountPath: /app/
+          - name: shared-volume
+            mountPath: {{ .Values.volumeMount.dashboardServicePath | quote }}
+          {{- if .Values.dashboardService.extraVolumeMounts }}
+          {{- include "common.tplvalues.render" (dict "value" .Values.dashboardService.extraVolumeMounts "context" $) | nindent 12 }}
+          {{- end }}
+        {{- if .Values.sidecars }}
+        {{- include "common.tplvalues.render" ( dict "value" .Values.sidecars "context" $) | nindent 8 }}
+        {{- end }}
+
+      volumes:
+        - name: intersect-config
+          secret:
+            secretName: {{ template "common.names.fullname" . }}-secret-intersect-config
+            path: config.yaml
+        - name: "shared-volume"
+          emptyDir: {}
+        {{- if .Values.extraVolumes }}
+        {{- include "common.tplvalues.render" (dict "value" .Values.extraVolumes "context" $) | nindent 8 }}
+        {{- end }}

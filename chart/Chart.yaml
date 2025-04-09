@@ -1,0 +1,8 @@
+apiVersion: v2
+name: nsdf-intersect-dashboard
+description: "NSDF INTERSECT Diffraction Dashboard Service"
+version: 0.1.0
+dependencies:
+  - name: common
+    repository: https://charts.bitnami.com/bitnami
+    version: "^2.9.1"

@@ -2,10 +2,11 @@
 FROM python:3.10-slim
 
 WORKDIR /usr/src/storage_service
-COPY storage_service.py ./storage_service.py
-COPY constants.py ./constants.py
 
 RUN python -m pip install python-dotenv boto3==1.35.99
+
+COPY storage_service.py ./storage_service.py
+COPY constants.py ./constants.py
 
 EXPOSE 10044
 

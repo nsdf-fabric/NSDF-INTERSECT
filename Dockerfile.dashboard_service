@@ -2,12 +2,14 @@
 FROM python:3.10-slim
 
 WORKDIR /usr/src/dashboard_service
-COPY dashboard_service.py ./dashboard_service.py
-COPY constants.py ./constants.py
-COPY config_service.yaml /app/config_default.yaml
 
 RUN python -m pip install intersect-sdk[amqp]
 RUN python -m pip install pyyaml
+
+COPY dashboard_service.py ./dashboard_service.py
+COPY constants.py ./constants.py
+COPY config_service.yaml /app/config_default.yaml
+COPY config_dashboard.yaml /app/config_dashboard_default.yaml
 
 EXPOSE 10043
 

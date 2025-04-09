@@ -13,22 +13,30 @@ from load_gsas import load_gsas
 import plotly.graph_objects as go
 from datetime import datetime, timezone
 import numpy as np
+import yaml
 from constants import (
     MAX_BANKS,
-    SCIENTIST_CLOUD_VOLUME,
-    BRAGG_DATA_VOLUME,
-    TRANSITION_DATA_VOLUME,
-    ANDIE_DATA_VOLUME,
-    BRAGG_SCAN_PERIOD,
-    TRANSITION_SCAN_PERIOD,
-    SELECT_SCAN_PERIOD,
+    INTERSECT_DASHBOARD_CONFIG
+)
+
+
+import logging
+logger = logging.getLogger(__name__)
+logging.basicConfig(
+    filename='nsdf-intersect-dashboard.log',
+    encoding='utf-8',
+    level=logging.INFO
 )
 
 
 class AppState:
     def __init__(self):
+        # config
+        self.config = {'volumes': {'bragg_volume': '', 'transition_volume': '', 'andie_volume': '','scientist_cloud_volume': ''}, 'scan_period': {
+            'bragg_scan_period': 2, 'transition_scan_period': 2, 'select_scan_period': 45
+        }}
         # data
-        self.files = self.load_stateful_files()
+        self.files = defaultdict()
         self.current_bragg_file = ""
         self.id_campaign = ""
         self.id_transition = ""
@@ -131,17 +139,17 @@ class AppState:
         self.reset_axis_button = pn.widgets.Button(
             name="Reset Axes", button_type="success"
         )
-        self.wkspinfo_md = pn.pane.Markdown("""""")
+        self.information_md = pn.pane.Markdown("""""")
         self.all_banks_header_md = pn.pane.Markdown("""""")
         self.andie_header_md = pn.pane.Markdown("""""")
         self.stateful_plot_header_md = pn.pane.Markdown("""""")
 
-        self.render_information_content()
-        self.render_bragg_plot()
+        self._render_information_content()
 
-    def load_stateful_files(self) -> DefaultDict[str, str]:
-        files = os.listdir(SCIENTIST_CLOUD_VOLUME)
+    def _load_stateful_files(self) -> DefaultDict[str, str]:
+        """load files as timestamp/filename pair from the scientist cloud volume"""
         stateful_files = defaultdict()
+        files = os.listdir(self.config['volumes']['scientist_cloud_volume'])
         if files:
             for file in files:
                 if file.endswith(".gsa"):
@@ -153,16 +161,18 @@ class AppState:
 
         return stateful_files
 
-    def load_workspace(self, filename: str):
-        self.wksp = load_gsas(os.path.join(BRAGG_DATA_VOLUME, filename))
+    def _load_workspace(self, filename: str):
+        """load a gsas file into a workspace"""
+        self.wksp = load_gsas(os.path.join(self.config['volumes']['bragg_volume'], filename))
         self.name = self.wksp.name()
         self.wksp_title = self.wksp.getTitle()
         self.nEvents = self.wksp.getNEvents()
 
-    def render_transition_content(self):
+    def _render_transition_content(self):
+        """renders the transition plot using transition volume"""
         temp, ylist, traces = [], [], []
         maxY = 0.0
-        with open(os.path.join(TRANSITION_DATA_VOLUME, f"{self.id_campaign}_transition.txt")) as f:
+        with open(os.path.join(self.config['volumes']['transition_volume'], f"{self.id_campaign}_transition.txt")) as f:
             for line in f:
                 data_tuple = line.strip().split(",")
                 temp.append(float(data_tuple[1]))
@@ -197,7 +207,8 @@ class AppState:
         self.transition_data_dict["layout"].title.text = f"Campaign: {self.id_campaign}"
         self.transition_plot.object = self.transition_data_dict
 
-    def render_andie_content(self):
+    def _render_andie_content(self):
+        """renders the ANDiE prediction on the transition plot"""
         self.andie_header_md.object = f"""
             <div style="border: 4px solid #FBC02D;  padding: 8px; background-color: #FFF9C4; display: flex;
             flex-direction: column;
@@ -217,8 +228,9 @@ class AppState:
         # patching transition plot
         self.transition_plot.object = self.transition_data_dict
 
-    def render_information_content(self):
-        self.wkspinfo_md.object = f"""
+    def _render_information_content(self):
+        """renders information content for the information tab"""
+        self.information_md.object = f"""
         <style>
         .field {{
             font-size: 20px;
@@ -243,24 +255,21 @@ class AppState:
             color: #333;
         }}
         </style>
-
         <div class="info-container">
-            <div class="title">Workspace Information</div>
-            <div class="field">Filename: {self.name} </div>
-            <div class="field">Number of Events: {self.nEvents}</div>
-        </div>
-        <div class="info-container">
-            <div class="title">Dashboard configuration</div>
-            <div class="field">Cycle update: {BRAGG_SCAN_PERIOD}s </div>
+            <div class="title">Dashboard Configuration</div>
+            <div class="field">Bragg Plot Update Cycle: {self.config['scan_period']['bragg_scan_period']}s </div>
+            <div class="field">Transition Plot Update Cycle: {self.config['scan_period']['transition_scan_period']}s </div>
+            <div class="field">Stateful Plot Update Cycle: {self.config['scan_period']['select_scan_period']}s </div>
         </div>
         """
 
-    def render_bragg_plot(self):
+    def _render_bragg_plot(self):
+        """renders a gsas workspace in the bragg plot and by bank tabs"""
         if self.wksp:
             self.lastUpdate = datetime.now().strftime("%B %d, %Y %I:%M:%S %p UTC")
             # patching header
             self.all_banks_header_md.object = f"""
-            <div style="border: 4px solid #00662c; padding: 8px; background-color: #e0f7e0; display: inline-block; 
+            <div style="border: 4px solid #00662c; padding: 8px; background-color: #e0f7e0; display: inline-block;
                 border-radius: 15px; font-size: 18px; font-family: Arial, sans-serif;">
             🔴 <strong>Live:</strong> {self.lastUpdate}
             </div>
@@ -301,10 +310,12 @@ class AppState:
             self.bragg_data_dict["layout"].title.text = self.wksp_title
             self.bragg_data_plot.object = self.bragg_data_dict
 
-    def render_bragg_content(self, name):
-        self.load_workspace(name)
-        self.render_information_content()
-        self.render_bragg_plot()
+    def _render_bragg_content(self, name):
+        """
+        renders the bragg content by loading the workspace and rendering the plot
+        """
+        self._load_workspace(name)
+        self._render_bragg_plot()
 
     def gen_figure_data(self, wksp_index: int, name: str):
         bank_data = dict(
@@ -330,9 +341,10 @@ class AppState:
         self.ylim_slider.value = self.maxY
 
     def update_stateful_plot(self, file):
+        """updates the stateful plot when the select widget is triggered"""
         if file != "":
             traces = []
-            wksp = load_gsas(os.path.join(SCIENTIST_CLOUD_VOLUME, file))
+            wksp = load_gsas(os.path.join(self.config['volumes']['scientist_cloud_volume'], file))
             for bank_number in wksp.getSpectrumNumbers():
                 i = wksp.getIndexFromSpectrumNumber(bank_number)
                 dataX, dataY = wksp.dataX(i), wksp.dataY(i)
@@ -350,7 +362,7 @@ class AppState:
             ).strftime("%B %d, %Y %I:%M:%S %p UTC")
 
             self.stateful_plot_header_md.object = f"""
-            <div style="border: 4px solid #005b8c; padding: 8px; background-color: #e0f0f7; display: inline-block; 
+            <div style="border: 4px solid #005b8c; padding: 8px; background-color: #e0f0f7; display: inline-block;
                 border-radius: 15px; font-size: 18px; font-family: Arial, sans-serif;">
             <strong>Date:</strong> {human_readable_timestamp}
             </div>
@@ -364,10 +376,21 @@ class AppState:
             )
             self.stateful_plot.object = self.stateful_plot_data_dict
 
-    def last_id(self, plot: str, filename: str) -> str:
+    def _last_id(self, plot: str, filename: str) -> str:
+        """
+        Returns the id of the last record of a given file.
+
+        Args:
+            plot(str): the plot that we want the last record (TRANSITION or ANDIE).
+            filename(str): the name of the file to retrieve the record from.
+
+        Returns:
+            str: the id of the last record
+        """
+
         match plot:
             case "TRANSITION":
-                transition_state_path = os.path.join(TRANSITION_DATA_VOLUME, filename)
+                transition_state_path = os.path.join(self.config['volumes']['transition_volume'], filename)
                 if not os.path.exists(transition_state_path):
                     return self.id_transition
 
@@ -379,7 +402,7 @@ class AppState:
                 return last_measure.strip().split(",")[0] if last_measure != "" else self.id_transition
 
             case "ANDIE":
-                andie_state_path = os.path.join(ANDIE_DATA_VOLUME, "andie.txt")
+                andie_state_path = os.path.join(self.config['volumes']['andie_volume'], "andie.txt")
                 if not os.path.exists(andie_state_path):
                     return self.id_andie
 
@@ -400,23 +423,39 @@ class AppState:
             case _:
                 return ""
 
-    # LIFECYCLE METHODS
-    def check_new_bragg_files(self):
-        files = os.listdir(BRAGG_DATA_VOLUME)
+    # POLLING METHODS
+    def poll_bragg(self):
+        """
+        Polling method to check, update, and render the bragg plot on an interval.
+        """
+        # Check volume and return if does not exist
+        if not os.path.isdir(self.config['volumes']['bragg_volume']):
+            logger.warning(f"Bragg volume: {self.config['volumes']['bragg_volume']} not found, skipping checks...")
+            return
+
+        files = os.listdir(self.config['volumes']['bragg_volume'])
         if files:
             files = sorted(files, key=lambda f: int(f.split("_")[0]))
             if files[-1] != self.current_bragg_file:
                 self.current_bragg_file = files[-1]
-                self.render_bragg_content(files[-1])
+                self._render_bragg_content(files[-1])
 
             if len(files) > 1:
                 for i in range(len(files) - 1):
-                    filepath = os.path.join(BRAGG_DATA_VOLUME, files[i])
+                    filepath = os.path.join(self.config['volumes']['bragg_volume'], files[i])
                     if os.path.exists(filepath):
                         os.remove(filepath)
 
-    def check_new_transition_data(self):
-        files = os.listdir(TRANSITION_DATA_VOLUME)
+    def poll_transition(self):
+        """
+        Polling method to check, update, and render the transition plot on an interval.
+        """
+        # Check volume and return if does not exist
+        if not os.path.isdir(self.config['volumes']['transition_volume']):
+            logger.warning(f"Transition volume: {self.config['volumes']['transition_volume']} not found, skipping checks...")
+            return
+
+        files = os.listdir(self.config['volumes']['transition_volume'])
         if files:
             if len(files) > 1:
                 # change campaign id
@@ -426,34 +465,67 @@ class AppState:
                     cid = file.split("_")[0]
                     if cid != self.id_campaign:
                         self.id_campaign = cid
-                os.remove(os.path.join(TRANSITION_DATA_VOLUME, f"{prev_cid}_transition.txt"))
+                os.remove(os.path.join(self.config['volumes']['transition_volume'], f"{prev_cid}_transition.txt"))
             else:
                 self.id_campaign = files[0].split("_")[0]
 
-            id = self.last_id("TRANSITION", f"{self.id_campaign}_transition.txt")
+            id = self._last_id("TRANSITION", f"{self.id_campaign}_transition.txt")
             if id != self.id_transition:
                 self.id_transition = id
-                self.render_transition_content()
+                self._render_transition_content()
 
-    def check_new_next_temperature_data(self):
-        id = self.last_id("ANDIE", "andie.txt")
+    def poll_andie(self):
+        """
+        Polling method to check, update, and render the ANDiE prediction on the transition plot on an interval.
+        """
+        # Check volume and return if does not exist
+        if not os.path.isdir(self.config['volumes']['andie_volume']):
+            logger.warning(f"ANDiE volume: {self.config['volumes']['andie_volume']} not found, skipping checks...")
+            return
+
+        id = self._last_id("ANDIE", "andie.txt")
         if id != self.id_andie:
             self.id_andie = id
-            self.render_andie_content()
+            self._render_andie_content()
 
-    def check_transition_and_next_temp(self):
+    def poll_transition_and_andie(self):
+        """
+        Synchronize polling of transition and ANDiE prediction on the same interval.
+        """
         # update both to render ANDiE next temperature in transition
-        self.check_new_transition_data()
-        self.check_new_next_temperature_data()
+        self.poll_transition()
+        self.poll_andie()
 
-    def update_stateful_plot_list(self):
-        self.files = self.load_stateful_files()
+    def poll_stateful_files(self):
+        """
+        Polling method to check, update, and render the files available on the
+        scientist cloud volume as options to a select widget on the controls on an interval.
+        """
+        # Check volume and return if does not exist
+        if not os.path.isdir(self.config['volumes']['scientist_cloud_volume']):
+            logger.warning(
+                f"Scientist cloud volume: {self.config['volumes']['scientist_cloud_volume']} not found, "
+                "skipping load stateful files..."
+            )
+            return
+
+        self.files = self._load_stateful_files()
         self.select_bragg_file.options = self.files
 
 
 def main():
     pn.extension("plotly")
     app_state = AppState()
+
+    config_path = os.getenv(INTERSECT_DASHBOARD_CONFIG, "./config_dashboard.yaml")
+    try:
+        with open(config_path) as f:
+            app_state.config = yaml.safe_load(f)
+    except Exception as e:
+        logger.error(f"could not initialize dashboard, configuration path does not exists: {e}")
+        return
+
+    logger.info("initialized dashboard configuration")
 
     bragg_data_tab = pn.Column(
         pn.Row(app_state.all_banks_header_md, app_state.andie_header_md),
@@ -470,7 +542,7 @@ def main():
         app_state.transition_plot,
     )
 
-    information_tab = pn.Row(app_state.wkspinfo_md)
+    information_tab = pn.Row(app_state.information_md)
 
     stateful_plots_tab = pn.Column(
         app_state.stateful_plot_header_md, app_state.stateful_plot
@@ -507,17 +579,17 @@ def main():
         busy_indicator=None,
     )
 
-    # Listen to changes in directory with period = DELAY secs
+    # Listen to changes in volumes in an interval which use polling methods
     pn.state.add_periodic_callback(
-        callback=app_state.check_new_bragg_files, period=BRAGG_SCAN_PERIOD * 1000
+        callback=app_state.poll_bragg, period=app_state.config['scan_period']['bragg_scan_period'] * 1000
     )
     pn.state.add_periodic_callback(
-        callback=app_state.check_transition_and_next_temp,
-        period=TRANSITION_SCAN_PERIOD * 1000,
+        callback=app_state.poll_transition_and_andie,
+        period=app_state.config['scan_period']['transition_scan_period']  * 1000,
     )
 
     pn.state.add_periodic_callback(
-        callback=app_state.update_stateful_plot_list, period=SELECT_SCAN_PERIOD * 1000
+        callback=app_state.poll_stateful_files, period=app_state.config['scan_period']['select_scan_period']* 1000
     )
 
     template.servable()
