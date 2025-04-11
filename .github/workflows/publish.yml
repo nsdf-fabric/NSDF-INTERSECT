@@ -32,7 +32,7 @@ jobs:
 
       - name: Build Dashboard Docker image
         run: |
-          docker build --platform linux/amd64 -f Dockerfile.dashboard -t ghcr.io/${{ github.repository_owner }}/${{env.DASHBOARD_IMAGE_NAME}}:latest .
+          docker build -f Dockerfile.dashboard -t ghcr.io/${{ github.repository_owner }}/${{env.DASHBOARD_IMAGE_NAME}}:latest .
 
       - name: Build Dashboard Service Docker image
         run: |
