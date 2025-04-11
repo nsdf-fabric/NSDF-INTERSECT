@@ -4,6 +4,7 @@
 <p align="center">
  <a href="https://www.python.org/downloads/release/python-310/"><img alt="Python 3.10" src="https://img.shields.io/badge/Python-3.10-3776AB.svg?style=flat&logo=python&logoColor=white"></a>
  <a href="https://www.docker.com"><img alt="Docker" src="https://badges.aleen42.com/src/docker.svg"></a>
+ <img src="https://github.com/nsdf-fabric/NSDF-INTERSECT/actions/workflows/test.yml/badge.svg" alt="test status badge">
  <img src="https://github.com/nsdf-fabric/NSDF-INTERSECT/actions/workflows/publish.yml/badge.svg" alt="publish status badge">
  <img src="https://github.com/nsdf-fabric/NSDF-INTERSECT/actions/workflows/deploy-linode.yml/badge.svg" alt="linode intersect chart cluster deployment status badge">
 </p>
@@ -113,19 +114,19 @@ To run this client make sure you have the service running, then you can execute 
 - For bragg data
 
 ```bash
-python single_client.py --bragg
+python clients/single_client.py --bragg
 ```
 
 - For transition data
 
 ```bash
-python single_client.py --transition
+python clients/single_client.py --transition
 ```
 
 - For next temperature data
 
 ```bash
-python single_client.py --next-temp --val 30.0
+python clients/single_client.py --next-temp --val 30.0
 ```
 
 ### realtime_client.py
@@ -136,7 +137,7 @@ on this type of client here [counting example](https://intersect-python-sdk.read
 To run this client make sure you have the service running, then you can execute the following:
 
 ```bash
-python realtime_client.py
+python clients/realtime_client.py
 ```
 
 ### transition_client.py
@@ -146,11 +147,11 @@ The client can simulate a full campaign for the transition plot via its two argu
 
 ```bash
 # default --n is 10 --ny is 3
-python transition_client.py
+python clients/transition_client.py
 ```
 
 ```bash
-python transition_client.py --ny 5
+python clients/transition_client.py --ny 5
 ```
 
 ## 📦 Running all services

@@ -23,7 +23,7 @@ from intersect_sdk import (
     default_intersect_lifecycle_loop,
 )
 
-from dashboard_service import NextTemperature, TransitionData
+from schema import TransitionData, NextTemperature
 
 logging.basicConfig(level=logging.INFO)
 
@@ -64,7 +64,7 @@ transition_data = [
     [200.00, 1.426667976082179, 0.16991445836095545],
 ]
 
-CONFIG_CLIENT = "config_client.yaml"
+CONFIG_CLIENT = "config/config_client.yaml"
 
 
 def generate_y_list(ylen: int) -> List[float]:

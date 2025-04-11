@@ -21,7 +21,7 @@ from intersect_sdk import (
     default_intersect_lifecycle_loop,
 )
 
-from dashboard_service import FileType, NextTemperature, TransitionData
+from schema import FileType, TransitionData, NextTemperature
 
 logging.basicConfig(level=logging.INFO)
 
@@ -63,7 +63,8 @@ transition_data = [
 ]
 
 
-CONFIG_CLIENT = "config_client.yaml"
+CONFIG_CLIENT = os.path.join(os.getcwd(), "config/config_client.yaml")
+DATA_PATH = os.path.join(os.getcwd(), "clients/short_list_of_data.txt")
 
 
 class SampleOrchestrator:
@@ -111,7 +112,7 @@ class SampleOrchestrator:
             )
 
         # bragg data
-        with open("./short_list_of_data.txt") as f:
+        with open(DATA_PATH) as f:
             for line in f:
                 filepath = line.strip()
                 with open(filepath, "rb") as file:

@@ -1,10 +1,9 @@
 name: espd_mantid
 channels:
-  - mantid
   - conda-forge
 dependencies:
   - pyyaml
-  - mantid=6.11.0
+  - numpy
   - python=3.10
   - plotly==6.0.0
   - panel==1.6.0

@@ -9,7 +9,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     env:
       DASHBOARD_IMAGE_NAME: intersect-dashboard
       DASHBOARD_SERVICE_IMAGE_NAME: intersect-service
