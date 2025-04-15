@@ -18,6 +18,7 @@
   # message plane
   messageBroker:
     username: &messageBroker-username "controller"
+    internalHost: &messageBroker-internalHost "nsdf-intersect-intersect-message-broker-1"
     # based off of templates/rabbitmq-secret.yaml, this is a hardcoded secret name we can reference across numerous applications
     brokerSecretName: &messageBroker-password "nsdf-intersect-broker-secret"
     brokerSecretKey: &messageBroker-passwordKey "rabbitmq-password"
@@ -50,6 +51,7 @@ intersect:
       log_level: *proxy-loglevel
       broker:
         username: *messageBroker-username
+        host: *messageBroker-internalHost
         password:
           isSecret: true
           secretName: *messageBroker-password
