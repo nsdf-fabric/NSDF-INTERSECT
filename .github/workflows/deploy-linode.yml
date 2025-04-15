@@ -32,7 +32,7 @@ jobs:
           helm dependency update deployment/chart
 
       - name: Deploy on Linode
-        run: helm upgrade nsdf-intersect deployment/chart --install --force --wait -f ~/.kube/secret-values.yaml
+        run: helm upgrade -n intersect nsdf-intersect deployment/chart --install --force --wait -f ~/.kube/secret-values.yaml
 
       - name: Cleanup
         run: rm -rf ~/.kube
