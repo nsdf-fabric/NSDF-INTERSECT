@@ -3,12 +3,24 @@
 ######################
 # anchors are just a useful feature so you don't repeat yourself in the config file
 
+
 .anchors:
+  # proxy
+  proxy:
+    systemName: &proxy-systemName "nsdf.cloud.diffraction."
+    log_level: &proxy-loglevel "info"  # set to "debug" if you want extremely verbose output, including of the messages themselves
+
+    server:
+      serverUsername: &proxy-serverUsername "proxy_username"
+      serverContainerPort: &proxy-serverPort 9071 # you do not have to set this value, it will be 8080 if you don't. This is mostly to avoid conflicts with other applications.
+      nodePort: &proxy-serverNodePort 30030
+
   # message plane
   messageBroker:
     username: &messageBroker-username "controller"
     # based off of templates/rabbitmq-secret.yaml, this is a hardcoded secret name we can reference across numerous applications
     brokerSecretName: &messageBroker-password "nsdf-intersect-broker-secret"
+    brokerSecretKey: &messageBroker-passwordKey "rabbitmq-password"
     amqpNodePort: &messageBroker-amqpNodePort 30010
     mqttNodePort: &messageBroker-mqttNodePort 30011
     #stompNodePort: &messageBroker-stompNodePort 30012
@@ -24,6 +36,25 @@ commonAnnotations: {}
 brokerPassword: ""
 
 intersect:
+  proxy-http-server:
+    enabled: true
+    service:
+      type: NodePort
+      port: *proxy-serverPort
+      nodePort: *proxy-serverNodePort
+    # you do not have to set this value, it will be 8080 if you don't.
+    containerPort: *proxy-serverPort
+    app:
+      username: *proxy-serverUsername
+      topic_prefix: *proxy-systemName
+      log_level: *proxy-loglevel
+      broker:
+        username: *messageBroker-username
+        password:
+          isSecret: true
+          secretName: *messageBroker-password
+          secretKey: *messageBroker-passwordKey
+
   intersect-message-broker-1:
     image: 
       debug: true
