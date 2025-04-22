@@ -22,7 +22,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install pyyaml numpy plotly==1.6.0 panel==6.0.0 pytest
+          pip install pyyaml numpy plotly==6.0.0 panel==1.6.0 pytest
 
       - name: Run tests
         run: |
