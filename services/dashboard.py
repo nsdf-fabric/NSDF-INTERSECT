@@ -55,8 +55,8 @@ class AppState:
             data=[],
             layout=go.Layout(
                 title=dict(text="Bragg Data", font=dict(size=22, weight="bold")),
-                xaxis=dict(title="d-Spacing"),
-                yaxis=dict(title="Intensity"),
+                xaxis=dict(title=dict(text="d-Spacing", font=dict(size=16)), tickfont=dict(size=14)),
+                yaxis=dict(title=dict(text="Intensity", font=dict(size=16)), tickfont=dict(size=14)),
             ),
         )
         self.bragg_data_by_bank_dict = [
@@ -64,8 +64,8 @@ class AppState:
                 data=[],
                 layout=go.Layout(
                     title=dict(text=f"Bank {i+1}", font=dict(size=22, weight="bold")),
-                    xaxis=dict(title="d-Spacing"),
-                    yaxis=dict(title="Intensity"),
+                    xaxis=dict(title=dict(text="d-Spacing", font=dict(size=16)), tickfont=dict(size=14)),
+                    yaxis=dict(title=dict(text="Intensity", font=dict(size=16)), tickfont=dict(size=14)),
                 ),
             )
             for i in range(MAX_BANKS)
@@ -82,8 +82,9 @@ class AppState:
             ],
             layout=go.Layout(
                 title=dict(text="Transition Plot", font=dict(size=22, weight="bold")),
-                xaxis=dict(title="Temperature (K)"),
-                yaxis=dict(title="d-Spacing"),
+                xaxis=dict(title=dict(text="Temperature (K)", font=dict(size=16)), tickfont=dict(size=14)),
+                yaxis=dict(title=dict(text="d-Spacing", font=dict(size=16)), tickfont=dict(size=14)),
+                legend=dict(font=dict(size=16))
             ),
         )
         self.stateful_plot_data_dict = dict(
@@ -92,8 +93,9 @@ class AppState:
                 title=dict(
                     text="Bragg Data Stateful Plot", font=dict(size=22, weight="bold")
                 ),
-                xaxis=dict(title="d-Spacing"),
-                yaxis=dict(title="Intensity"),
+                xaxis=dict(title=dict(text="d-Spacing", font=dict(size=16)), tickfont=dict(size=14)),
+                yaxis=dict(title=dict(text="Intensity", font=dict(size=16)), tickfont=dict(size=14)),
+
             ),
         )
 

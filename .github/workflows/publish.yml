@@ -1,10 +1,10 @@
 name: Publish Services to GHCR
 
 on:
-  workflow_run:
-    workflows: [Test]
-    types:
-      - completed
+  push:
+    tags:
+      - "**"
+  workflow_dispatch:
 
 jobs:
   build:
@@ -14,7 +14,6 @@ jobs:
       DASHBOARD_SERVICE_IMAGE_NAME: intersect-service
       STORAGE_SERVICE_IMAGE_NAME: intersect-storage
 
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -52,11 +51,14 @@ jobs:
       - name: Push Dashboard Docker image to GHCR
         run: |
           docker push ghcr.io/${{ github.repository_owner }}/${{env.DASHBOARD_IMAGE_NAME}}:latest
+          docker push ghcr.io/${{ github.repository_owner }}/${{env.DASHBOARD_IMAGE_NAME}}:${{github.sha}}
 
       - name: Push Dashboard Service Docker image to GHCR
         run: |
           docker push ghcr.io/${{ github.repository_owner }}/${{env.DASHBOARD_SERVICE_IMAGE_NAME}}:latest
+          docker push ghcr.io/${{ github.repository_owner }}/${{env.DASHBOARD_SERVICE_IMAGE_NAME}}:${{github.sha}}
 
       - name: Push Storage Service Docker image to GHCR
         run: |
           docker push ghcr.io/${{ github.repository_owner }}/${{env.STORAGE_SERVICE_IMAGE_NAME}}:latest
+          docker push ghcr.io/${{ github.repository_owner }}/${{env.STORAGE_SERVICE_IMAGE_NAME}}:${{github.sha}}
