@@ -55,8 +55,8 @@ class AppState:
             data=[],
             layout=go.Layout(
                 title=dict(text="Bragg Data", font=dict(size=22, weight="bold")),
-                xaxis=dict(title="d-Spacing"),
-                yaxis=dict(title="Intensity"),
+                xaxis=dict(title=dict(text="d-Spacing", font=dict(size=16)), tickfont=dict(size=14)),
+                yaxis=dict(title=dict(text="Intensity", font=dict(size=16)), tickfont=dict(size=14)),
             ),
         )
         self.bragg_data_by_bank_dict = [
@@ -64,8 +64,8 @@ class AppState:
                 data=[],
                 layout=go.Layout(
                     title=dict(text=f"Bank {i+1}", font=dict(size=22, weight="bold")),
-                    xaxis=dict(title="d-Spacing"),
-                    yaxis=dict(title="Intensity"),
+                    xaxis=dict(title=dict(text="d-Spacing", font=dict(size=16)), tickfont=dict(size=14)),
+                    yaxis=dict(title=dict(text="Intensity", font=dict(size=16)), tickfont=dict(size=14)),
                 ),
             )
             for i in range(MAX_BANKS)
@@ -82,8 +82,9 @@ class AppState:
             ],
             layout=go.Layout(
                 title=dict(text="Transition Plot", font=dict(size=22, weight="bold")),
-                xaxis=dict(title="Temperature (K)"),
-                yaxis=dict(title="d-Spacing"),
+                xaxis=dict(title=dict(text="Temperature (K)", font=dict(size=16)), tickfont=dict(size=14)),
+                yaxis=dict(title=dict(text="d-Spacing", font=dict(size=16)), tickfont=dict(size=14)),
+                legend=dict(font=dict(size=16))
             ),
         )
         self.stateful_plot_data_dict = dict(
@@ -92,8 +93,9 @@ class AppState:
                 title=dict(
                     text="Bragg Data Stateful Plot", font=dict(size=22, weight="bold")
                 ),
-                xaxis=dict(title="d-Spacing"),
-                yaxis=dict(title="Intensity"),
+                xaxis=dict(title=dict(text="d-Spacing", font=dict(size=16)), tickfont=dict(size=14)),
+                yaxis=dict(title=dict(text="Intensity", font=dict(size=16)), tickfont=dict(size=14)),
+
             ),
         )
 
@@ -102,9 +104,8 @@ class AppState:
             self.bragg_data_dict,
             sizing_mode="stretch_both",
         )
-        self.bragg_data_by_bank_plots: List[pn.pane.Plotly] = [
-            pn.pane.Plotly(self.bragg_data_by_bank_dict[i]) for i in range(MAX_BANKS)
-        ]
+        self.bragg_data_by_bank_plots: List[pn.pane.Plotly] = []
+
         self.transition_plot = pn.pane.Plotly(
             self.transition_data_dict, sizing_mode="stretch_both"
         )
@@ -112,6 +113,10 @@ class AppState:
         self.stateful_plot = pn.pane.Plotly(
             self.stateful_plot_data_dict, sizing_mode="stretch_both"
         )
+
+        self.by_bank_tab = pn.Column(
+            pn.pane.Markdown("<h1>By Bank</h1>"),
+            pn.GridBox(*self.bragg_data_by_bank_plots, ncols=3))
 
         self.select_bragg_file = pn.widgets.AutocompleteInput(
             name="Bragg File Timestamp",
@@ -271,6 +276,8 @@ class AppState:
             """
 
             traces, self.maxX, self.maxY = [], 0.0, 0.0
+            self.bragg_data_by_bank_plots.clear()
+
             for wksp_index, arr in self.bragg_data.items():
                 scatter_line = go.Scatter(
                     x=arr[0],
@@ -285,12 +292,18 @@ class AppState:
                 self.maxY = max(self.maxY, np.max(arr[1]))
 
                 # patching individual bank plot
-                self.bragg_data_by_bank_dict[wksp_index-1]["data"] = scatter_line
-                self.bragg_data_by_bank_plots[wksp_index-1].object = self.bragg_data_by_bank_dict[
-                    wksp_index-1
-                ]
+                self.bragg_data_by_bank_plots.append(
+                    pn.pane.Plotly(dict(
+                        data=scatter_line,
+                        layout=go.Layout(
+                            title=dict(text=f"Bank {wksp_index}", font=dict(size=22, weight="bold")),
+                            xaxis=dict(title="d-Spacing"),
+                            yaxis=dict(title="Intensity"))
+                    )))
+
                 traces.append(scatter_line)
 
+            self.by_bank_tab[1] = pn.GridBox(*self.bragg_data_by_bank_plots, ncols=3)
             # setting slider limits
             self.xlim_slider.start = self.minX
             self.xlim_slider.end = self.xlim_slider.value = self.maxX
@@ -523,11 +536,6 @@ def App() -> MaterialTemplate:
         app_state.bragg_data_plot,
     )
 
-    by_bank_tab = pn.Column(
-        pn.pane.Markdown("<h1>By Bank</h1>"),
-        pn.GridBox(*app_state.bragg_data_by_bank_plots, ncols=3),
-    )
-
     transition_plot_tab = pn.Column(
         pn.Row(app_state.all_banks_header_md, app_state.andie_header_md),
         app_state.transition_plot,
@@ -541,7 +549,7 @@ def App() -> MaterialTemplate:
 
     main = pn.Tabs(
         ("Bragg Data", bragg_data_tab),
-        ("By Bank", by_bank_tab),
+        ("By Bank", app_state.by_bank_tab),
         ("Transition Plot", transition_plot_tab),
         ("Timestamp", stateful_plots_tab),
         ("Information", information_tab),
