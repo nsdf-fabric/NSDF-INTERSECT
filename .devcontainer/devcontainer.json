@@ -1,0 +1,20 @@
+{
+  "name": "NSDF INTERSECT",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "dockerComposeFile": "../compose_local.yaml",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+  },
+  "forwardPorts": [10042, 10043, 15672, 1883, 5672],
+  "postCreateCommand": "docker compose up -d",
+  "customizations": {
+    "vscode": {
+      "extensions": ["ms-python.python", "davidanson.vscode-markdownlint"],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  }
+}
