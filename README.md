@@ -30,6 +30,7 @@ This repository hosts the dashboard, dashboard service, storage service, and tes
   - [Transition client](#transition_clientpy)
 - [Running all services](#-running-all-services)
 - [Running with pre-built images](#running-with-pre-built-images)
+- [Running with codespaces](#running-with-codespaces)
 - [Authors](#authors)
 - [Acknowledgements](#acknowledgements)
 
@@ -44,7 +45,7 @@ The dashboard is the visualization component for monitoring the experiment in re
 To build the Docker image for the dashboard, run the following:
 
 ```bash
-docker build --platform linux/amd64 -t intersect-dashboard -f Dockerfile.dashboard .
+docker build -t intersect-dashboard -f Dockerfile.dashboard .
 ```
 
 #### Running the dashboard container
@@ -198,6 +199,46 @@ To stop and clean up the services.
 
 ```bash
 docker compose down
+```
+
+## Running with codespaces
+
+Click the next button to open in GitHub Codespaces
+
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/nsdf-fabric/NSDF-INTERSECT)
+
+Verify that you are using the `main` branch, the repository name `nsdf-fabric/NSDF-INTERSECT` and the dev container configuration `NSDF INTERSECT`. Then click on `Create Codespace`
+
+### 📦 Building the services
+
+Once the environment is created, we can build the services with the following:
+
+```bash
+make dashboard
+```
+
+```bash
+make service
+```
+
+```bash
+make storage
+```
+
+### 🌐 Setting up the network
+
+Next, we can build the networking for the system with compose as follows:
+
+```bash
+make up
+```
+
+### 🧪 Running experiment campaigns
+
+Finally, we can run a test client as follows:
+
+```bash
+make transition
 ```
 
 ## Authors
