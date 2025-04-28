@@ -2,7 +2,7 @@
   "name": "NSDF INTERSECT",
   "image": "mcr.microsoft.com/devcontainers/python:3.10",
   "features": {
-    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
     "ghcr.io/devcontainers/features/make:1": {}
   },
   "forwardPorts": [10042, 10043, 15672, 1883, 5672],
