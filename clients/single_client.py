@@ -86,7 +86,7 @@ def prepare_bragg_messages(n: int = 1):
 def prepare_transition_message():
     return IntersectDirectMessageParams(
         destination="nsdf.cloud.diffraction.dashboard.dashboard-service",
-        operation="NSDFDashboard.get_transition_data",
+        operation="NSDFDashboard.get_transition_data_single",
         payload=TransitionData(
             id=str(uuid4()), temp=transition_data[0][0], ylist=transition_data[0][1:]
         ),
@@ -119,7 +119,7 @@ def main():
         "--bragg", action="store_true", default=False, help="send bragg file"
     )
     parser.add_argument(
-        "--tpoint", action="store_true", default=False, help="send transition data"
+        "--transition", action="store_true", default=False, help="send transition data"
     )
     parser.add_argument(
         "--next-temp",
@@ -135,7 +135,7 @@ def main():
     if args.bragg:
         for msg in prepare_bragg_messages(args.n):
             initial_messages.append(msg)
-    if args.tpoint:
+    if args.transition:
         initial_messages.append(prepare_transition_message())
     if args.next_temp:
         initial_messages.append(prepare_next_temperature_message(args.val))
