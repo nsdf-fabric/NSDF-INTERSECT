@@ -17,11 +17,14 @@ import logging
 import subprocess
 import random
 import concurrent.futures
-from constants import BUCKET_PATH, BRAGG_PATH, SCIENTIST_CLOUD_VOLUME, STORAGE_SCAN_PERIOD, RETRY_FILE
+import yaml
+from constants import INTERSECT_STORAGE_CONFIG
 
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+logging.basicConfig(
+    filename="nsdf-intersect-storage.log", encoding="utf-8", level=logging.INFO
+)
 
 
 def Shell(cmd):
@@ -40,8 +43,7 @@ def check_if_key_exists(key: str) -> bool:
 
     s3 = get_bucket()
     try:
-        obj = s3.Object(key)
-        obj.load()
+        s3.Object(key).load()
         return True
     except ClientError as e:
         if e.response["Error"]["Code"] == "404":
@@ -50,7 +52,7 @@ def check_if_key_exists(key: str) -> bool:
         return False
 
 
-def upload_with_retry(local_filepath, key, max_retries=5, delay=2) -> str:
+def upload_with_retry(local_filepath, key, config, max_retries=5, delay=2) -> str:
     retries = 0
     bucket = get_bucket()
     cksum = int(Shell(f"cksum {local_filepath}").split()[0].strip())
@@ -70,12 +72,16 @@ def upload_with_retry(local_filepath, key, max_retries=5, delay=2) -> str:
                 time.sleep(delay + random.uniform(0, 1))
             else:
                 # write to retry.txt to upload later
-                path = os.path.join(SCIENTIST_CLOUD_VOLUME, RETRY_FILE)
+                path = os.path.join(
+                    config["volumes"]["scientist_cloud_volume"], "retry.txt"
+                )
                 os.makedirs(path, exist_ok=True)
                 with open(path, "a") as f:
                     f.write(f"{os.path.basename(local_filepath)}\n")
 
-                raise Exception(f"Failed to upload {filename}, after {max_retries} retries")
+                raise Exception(
+                    f"Failed to upload {filename}, after {max_retries} retries"
+                )
 
     return filename
 
@@ -101,36 +107,69 @@ def get_bucket():
 
 
 def main():
+    config = {}
+    config_path = os.getenv(INTERSECT_STORAGE_CONFIG, "/app/config_storage.yaml")
+    try:
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+    except Exception as e:
+        logger.error(
+            f"could not initialize storage service, configuration path of storage does not exists: {e}"
+        )
+        return
+
     logger.info("Starting Storage Service")
 
-    if not os.path.exists(SCIENTIST_CLOUD_VOLUME):
-        os.makedirs(SCIENTIST_CLOUD_VOLUME, exist_ok=True)
-
     while True:
-        files = os.listdir(SCIENTIST_CLOUD_VOLUME)
+        files = os.listdir(config["volumes"]["scientist_cloud_volume"])
         jobs = []
         if files:
             for file in files:
-                match pathlib.Path(file).suffix:
-                    case ".gsa":
-                        key = os.path.join(BUCKET_PATH, BRAGG_PATH, file)
-                        if not check_if_key_exists(key):
-                            local_filepath = os.path.join(SCIENTIST_CLOUD_VOLUME, file)
-                            jobs.append([upload_with_retry, local_filepath, key])
-                    case _:
-                        logger.warning(f"unsupported file type: {file}")
-                        continue
+                path = pathlib.Path(file)
+                ext = path.suffix
+                if ext == ".gsa":
+                    key = os.path.join(
+                        config["sci_cloud"]["bucket_prefix"],
+                        config["sci_cloud"]["bragg_prefix"],
+                        file,
+                    )
+                    if not check_if_key_exists(key):
+                        local_filepath = os.path.join(
+                            config["volumes"]["scientist_cloud_volume"], file
+                        )
+                        jobs.append([upload_with_retry, local_filepath, key, config])
+                elif ext == ".done":
+                    file = f"{path.stem}_transition.txt"
+                    key = os.path.join(
+                        config["sci_cloud"]["bucket_prefix"],
+                        config["sci_cloud"]["transition_prefix"],
+                        file,
+                    )
+                    if not check_if_key_exists(key):
+                        local_filepath = os.path.join(
+                            config["volumes"]["scientist_cloud_volume"], file
+                        )
+                        jobs.append([upload_with_retry, local_filepath, key, config])
+                else:
+                    continue
 
             with concurrent.futures.ThreadPoolExecutor(max_workers=32) as ex:
                 futures = [ex.submit(*job) for job in jobs]
                 for future in concurrent.futures.as_completed(futures):
                     try:
                         result = future.result()
+                        if pathlib.Path(result).suffix == ".txt":
+                            os.remove(
+                                os.path.join(
+                                    config["volumes"]["scientist_cloud_volume"],
+                                    f"{result.split('_')[0]}.done",
+                                )
+                            )
                         logger.info(f"Uploaded file {result}")
                     except Exception as e:
                         logger.error(e)
 
-        time.sleep(STORAGE_SCAN_PERIOD)
+        time.sleep(config["scan_period"])
 
 
 if __name__ == "__main__":

@@ -110,7 +110,7 @@ class TestRenderers:
     def test_render_bragg_plot(self, configured_app):
         configured_app.poll_bragg()
         configured_app._render_bragg_plot()
-        assert len(configured_app.bragg_data_by_bank_dict) == 6
+        assert len(configured_app.bragg_data_by_bank_plots) == 6
         assert len(configured_app.bragg_data_dict["data"]) == 6
         assert configured_app.all_banks_header_md != """"""
         assert configured_app.bragg_data_dict["layout"].title.text != ""

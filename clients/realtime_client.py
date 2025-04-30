@@ -21,7 +21,7 @@ from intersect_sdk import (
     default_intersect_lifecycle_loop,
 )
 
-from schema import FileType, TransitionData, NextTemperature
+from schema import FileType, TransitionData, NextTemperature, FinishCampaignMsg
 
 logging.basicConfig(level=logging.INFO)
 
@@ -71,45 +71,7 @@ class SampleOrchestrator:
     def __init__(self) -> None:
         """ "Load all gsa files to simulate a stream of data coming in"""
         self.message_stack = []
-        id_campaign = uuid4()
-        for i in range(len(transition_data)):
-            data = transition_data[i]
-            nextpoint = (
-                transition_data[i + 1][0]
-                if i + 1 != len(transition_data)
-                else transition_data[i][0]
-            )
-
-            # transition data
-            self.message_stack.append(
-                (
-                    IntersectDirectMessageParams(
-                        destination="nsdf.cloud.diffraction.dashboard.dashboard-service",
-                        operation="NSDFDashboard.get_transition_data_single",
-                        payload=TransitionData(
-                            id=str(id_campaign),
-                            temp=data[0],
-                            ylist=data[1:],
-                        ),
-                    ),
-                    2.0,
-                )
-            )
-            # next temperature data
-            self.message_stack.append(
-                (
-                    IntersectDirectMessageParams(
-                        destination="nsdf.cloud.diffraction.dashboard.dashboard-service",
-                        operation="NSDFDashboard.get_next_temperature",
-                        payload=NextTemperature(
-                            id=str(id_campaign),
-                            data=nextpoint,
-                            timestamp=int(time.time()),
-                        ),
-                    ),
-                    2.0,
-                )
-            )
+        id_campaign = str(uuid4())
 
         # bragg data
         with open(DATA_PATH) as f:
@@ -131,6 +93,57 @@ class SampleOrchestrator:
                             2.0,
                         )
                     )
+        for i in range(len(transition_data)):
+            data = transition_data[i]
+            nextpoint = (
+                transition_data[i + 1][0]
+                if i + 1 != len(transition_data)
+                else transition_data[i][0]
+            )
+
+            # transition data
+            self.message_stack.append(
+                (
+                    IntersectDirectMessageParams(
+                        destination="nsdf.cloud.diffraction.dashboard.dashboard-service",
+                        operation="NSDFDashboard.get_transition_data_single",
+                        payload=TransitionData(
+                            id=id_campaign,
+                            temp=data[0],
+                            ylist=data[1:],
+                        ),
+                    ),
+                    2.0,
+                )
+            )
+            # next temperature data
+            self.message_stack.append(
+                (
+                    IntersectDirectMessageParams(
+                        destination="nsdf.cloud.diffraction.dashboard.dashboard-service",
+                        operation="NSDFDashboard.get_next_temperature",
+                        payload=NextTemperature(
+                            id=id_campaign,
+                            data=nextpoint,
+                            timestamp=int(time.time()),
+                        ),
+                    ),
+                    2.0,
+                )
+            )
+        # finish campaign
+        self.message_stack.append(
+            (
+                IntersectDirectMessageParams(
+                    destination="nsdf.cloud.diffraction.dashboard.dashboard-service",
+                    operation="NSDFDashboard.finish_campaign",
+                    payload=FinishCampaignMsg(
+                        id=id_campaign,
+                    ),
+                ),
+                2.0,
+            )
+        )
         self.message_stack.reverse()
 
     def client_callback(
