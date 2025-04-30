@@ -23,7 +23,7 @@ from intersect_sdk import (
     default_intersect_lifecycle_loop,
 )
 
-from schema import TransitionData, NextTemperature
+from schema import TransitionData, NextTemperature, FinishCampaignMsg
 
 logging.basicConfig(level=logging.INFO)
 
@@ -144,6 +144,19 @@ def generate_campaign(
         next_temp = temps[i + 1] if i + 1 < npoints else temps[i]
         campaign.append(generate_transition_msg(id, temps[i], ylen))
         campaign.append(generate_next_temp_msg(id, next_temp))
+
+    campaign.append(
+        (
+            IntersectDirectMessageParams(
+                destination="nsdf.cloud.diffraction.dashboard.dashboard-service",
+                operation="NSDFDashboard.finish_campaign",
+                payload=FinishCampaignMsg(
+                    id=id,
+                ),
+            ),
+            2.0,
+        )
+    )
 
     return campaign
 

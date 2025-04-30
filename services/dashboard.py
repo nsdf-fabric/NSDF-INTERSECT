@@ -16,10 +16,7 @@ from datetime import datetime, timezone
 import numpy as np
 import yaml
 from gsa_loader import load_gsa_file
-from constants import (
-    MAX_BANKS,
-    INTERSECT_DASHBOARD_CONFIG
-)
+from constants import INTERSECT_DASHBOARD_CONFIG
 
 
 logger = logging.getLogger(__name__)
@@ -54,22 +51,11 @@ class AppState:
         self.bragg_data_dict = dict(
             data=[],
             layout=go.Layout(
-                title=dict(text="Bragg Data", font=dict(size=22, weight="bold")),
-                xaxis=dict(title=dict(text="d-Spacing", font=dict(size=16)), tickfont=dict(size=14)),
-                yaxis=dict(title=dict(text="Intensity", font=dict(size=16)), tickfont=dict(size=14)),
+                title=dict(text="Bragg Data", font=dict(size=26, weight="bold")),
+                xaxis=dict(title=dict(text="d-Spacing", font=dict(size=22)), tickfont=dict(size=18)),
+                yaxis=dict(title=dict(text="Intensity", font=dict(size=22)), tickfont=dict(size=18)),
             ),
         )
-        self.bragg_data_by_bank_dict = [
-            dict(
-                data=[],
-                layout=go.Layout(
-                    title=dict(text=f"Bank {i+1}", font=dict(size=22, weight="bold")),
-                    xaxis=dict(title=dict(text="d-Spacing", font=dict(size=16)), tickfont=dict(size=14)),
-                    yaxis=dict(title=dict(text="Intensity", font=dict(size=16)), tickfont=dict(size=14)),
-                ),
-            )
-            for i in range(MAX_BANKS)
-        ]
         self.transition_data_dict = dict(
             data=[
                 go.Scatter(
@@ -81,20 +67,20 @@ class AppState:
                 )
             ],
             layout=go.Layout(
-                title=dict(text="Transition Plot", font=dict(size=22, weight="bold")),
-                xaxis=dict(title=dict(text="Temperature (K)", font=dict(size=16)), tickfont=dict(size=14)),
-                yaxis=dict(title=dict(text="d-Spacing", font=dict(size=16)), tickfont=dict(size=14)),
-                legend=dict(font=dict(size=16))
+                title=dict(text="Transition Plot", font=dict(size=26, weight="bold")),
+                xaxis=dict(title=dict(text="Temperature (K)", font=dict(size=22)), tickfont=dict(size=18)),
+                yaxis=dict(title=dict(text="d-Spacing", font=dict(size=22)), tickfont=dict(size=18)),
+                legend=dict(font=dict(size=22))
             ),
         )
         self.stateful_plot_data_dict = dict(
             data=[],
             layout=go.Layout(
                 title=dict(
-                    text="Bragg Data Stateful Plot", font=dict(size=22, weight="bold")
+                    text="Bragg Data Stateful Plot", font=dict(size=26, weight="bold")
                 ),
-                xaxis=dict(title=dict(text="d-Spacing", font=dict(size=16)), tickfont=dict(size=14)),
-                yaxis=dict(title=dict(text="Intensity", font=dict(size=16)), tickfont=dict(size=14)),
+                xaxis=dict(title=dict(text="d-Spacing", font=dict(size=22)), tickfont=dict(size=18)),
+                yaxis=dict(title=dict(text="Intensity", font=dict(size=22)), tickfont=dict(size=18)),
 
             ),
         )
@@ -116,7 +102,7 @@ class AppState:
 
         self.by_bank_tab = pn.Column(
             pn.pane.Markdown("<h1>By Bank</h1>"),
-            pn.GridBox(*self.bragg_data_by_bank_plots, ncols=3))
+            pn.FlexBox(*self.bragg_data_by_bank_plots))
 
         self.select_bragg_file = pn.widgets.AutocompleteInput(
             name="Bragg File Timestamp",
@@ -296,10 +282,10 @@ class AppState:
                     pn.pane.Plotly(dict(
                         data=scatter_line,
                         layout=go.Layout(
-                            title=dict(text=f"Bank {wksp_index}", font=dict(size=22, weight="bold")),
-                            xaxis=dict(title="d-Spacing"),
-                            yaxis=dict(title="Intensity"))
-                    )))
+                            title=dict(text=f"Bank {wksp_index}", font=dict(size=26, weight="bold")),
+                            xaxis=dict(title=dict(text="d-Spacing", font=dict(size=22)), tickfont=dict(size=18)),
+                            yaxis=dict(title=dict(text="Intensity", font=dict(size=22)), tickfont=dict(size=18)),)
+                    ), sizing_mode="stretch_both"))
 
                 traces.append(scatter_line)
 
@@ -584,7 +570,7 @@ def App() -> MaterialTemplate:
     )
     pn.state.add_periodic_callback(
         callback=app_state.poll_transition_and_andie,
-        period=app_state.config['scan_period']['transition_scan_period']  * 1000,
+        period=app_state.config['scan_period']['transition_scan_period'] * 1000,
     )
 
     pn.state.add_periodic_callback(

@@ -77,6 +77,17 @@ class NextTemperature(BaseModel):
     timestamp: int
 
 
+class FinishCampaignMsg(BaseModel):
+    """
+    Represents a message to signal the end of a campaign
+
+    Attributes:
+        id(str): The campaign id to finish
+    """
+
+    id: str
+
+
 def last_record(volume: str, cid: str) -> TransitionData:
     """
     Retrieve the last record from the transition file for the given cid.
@@ -257,6 +268,26 @@ class DashboardCapability(IntersectBaseCapabilityImplementation):
             s.write(
                 f"{next_temperature.id},{uuid.uuid4()},{next_temperature.timestamp},{next_temperature.data}\n"
             )
+
+    @intersect_message()
+    def finish_campaign(self, msg: FinishCampaignMsg) -> None:
+        """
+        Endpoint to signal the end of campaign
+
+        Args:
+            msg(FinishCampaignMsg): the message that includes the campaign id to finish
+
+        Side Effects:
+            - writes the .done file to the scientist cloud volume to signal the end of a campaign
+
+        """
+        storage_path = os.path.join(
+            self.config["volumes"]["scientist_cloud_volume"], f"{msg.id}.done"
+        )
+        os.makedirs(os.path.dirname(storage_path), exist_ok=True)
+
+        with open(storage_path, "w") as s:
+            s.write(" ")
 
 
 def dashboard_service():

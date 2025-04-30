@@ -23,8 +23,8 @@ TRANSITION_DATA_PATH = "transition_data"
 NEXT_TEMPERATURE_DATA_PATH = "andie_data"
 
 # DASHBOARD
-MAX_BANKS = 6
 INTERSECT_DASHBOARD_CONFIG = "INTERSECT_DASHBOARD_CONFIG"  # env variable holds the path to dashboard file configuration
-
 # SERVICE
 INTERSECT_SERVICE_CONFIG = "INTERSECT_SERVICE_CONFIG"  # env variable holds the path to service file configuration
+# STORAGE
+INTERSECT_STORAGE_CONFIG = "INTERSECT_STORAGE_CONFIG"  # env variable holds the path to the storage file configuration

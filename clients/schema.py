@@ -47,3 +47,14 @@ class NextTemperature(BaseModel):
     id: str
     data: float
     timestamp: int
+
+
+class FinishCampaignMsg(BaseModel):
+    """
+    Represents a message to signal the end of a campaign
+
+    Attributes:
+        id(str): The campaign id to finish
+    """
+
+    id: str

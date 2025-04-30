@@ -1,9 +1,10 @@
-# Simple docker-compose file which sets up the broker, dashboard, and dashboard service
+# Simple docker-compose file which sets up the broker, dashboard, dashboard service, and storage service
 # Note that for the broker, the default credentials are ` intersect_username / intersect_password `
 
 services:
   broker:
     image: "bitnami/rabbitmq:3.13.3"
+    container_name: rabbitmq
     ports:
       - "1883:1883" # MQTT port
       - "5672:5672" # AMQP port
@@ -24,12 +25,14 @@ services:
 
   dashboard:
     image: "ghcr.io/nsdf-fabric/intersect-dashboard:latest"
+    container_name: dashboard
     ports:
       - "10042:10042"
     depends_on:
       - broker
     environment:
       BOKEH_ALLOW_WS_ORIGIN: "*"
+      INTERSECT_DASHBOARD_CONFIG: "/app/config_dashboard_default.yaml"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:10042/"]
       interval: 10s
@@ -37,34 +40,37 @@ services:
       start_period: 10s
       timeout: 10s
     volumes:
-      - intersect_bragg_data:/usr/src/dashboard/bragg_data/
-      - intersect_transition_data:/usr/src/dashboard/transition_data/
-      - intersect_next_temperature_data:/usr/src/dashboard/next_temperature_data/
+      - intersect_bragg_volume:/usr/src/dashboard/bragg_volume/
+      - intersect_transition_volume:/usr/src/dashboard/transition_volume/
+      - intersect_andie_volume:/usr/src/dashboard/andie_volume/
       - intersect_scientist_cloud_volume:/usr/src/dashboard/scientist_cloud_volume
   dashboard_service:
     image: "ghcr.io/nsdf-fabric/intersect-service:latest"
+    container_name: dashboard_service
     ports:
       - "10043:10043"
+    environment:
+      INTERSECT_SERVICE_CONFIG: "/app/config_default.yaml"
     depends_on:
       broker:
         condition: service_healthy
     volumes:
-      - intersect_bragg_data:/usr/src/dashboard_service/bragg_data/
-      - intersect_transition_data:/usr/src/dashboard_service/transition_data/
-      - intersect_next_temperature_data:/usr/src/dashboard_service/next_temperature_data/
+      - intersect_bragg_volume:/usr/src/dashboard_service/bragg_volume/
+      - intersect_transition_volume:/usr/src/dashboard_service/transition_volume/
+      - intersect_andie_volume:/usr/src/dashboard_service/andie_volume/
       - intersect_scientist_cloud_volume:/usr/src/dashboard_service/scientist_cloud_volume
   storage_service:
     image: "ghcr.io/nsdf-fabric/intersect-storage:latest"
-    env_file:
-      - .env
+    container_name: storage_service
     ports:
       - "10044:10044"
+    environment:
+      INTERSECT_SERVICE_CONFIG: "/app/config_storage.yaml"
+    env_file: ".env"
     volumes:
       - intersect_scientist_cloud_volume:/usr/src/storage_service/scientist_cloud_volume
-      - intersect_retry_volume:/usr/src/storage_service/retry_volume
 volumes:
-  intersect_bragg_data:
-  intersect_transition_data:
-  intersect_next_temperature_data:
+  intersect_bragg_volume:
+  intersect_transition_volume:
+  intersect_andie_volume:
   intersect_scientist_cloud_volume:
-  intersect_retry_volume:
