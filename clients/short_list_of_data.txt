@@ -4,3 +4,6 @@
 ./GSAS/NOM168366tof.gsa
 ./GSAS/NOM168367tof.gsa
 ./GSAS/NOM168368tof.gsa
+./GSAS/NOM168369tof.gsa
+./GSAS/NOM168370tof.gsa
+./GSAS/NOM168371tof.gsa
