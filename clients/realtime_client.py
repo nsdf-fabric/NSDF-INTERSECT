@@ -93,6 +93,8 @@ class SampleOrchestrator:
                             2.0,
                         )
                     )
+
+        base_time = int(time.time())
         for i in range(len(transition_data)):
             data = transition_data[i]
             nextpoint = (
@@ -100,6 +102,8 @@ class SampleOrchestrator:
                 if i + 1 != len(transition_data)
                 else transition_data[i][0]
             )
+
+            base_time = base_time + 2
 
             # transition data
             self.message_stack.append(
@@ -125,7 +129,7 @@ class SampleOrchestrator:
                         payload=NextTemperature(
                             id=id_campaign,
                             data=nextpoint,
-                            timestamp=int(time.time()),
+                            timestamp=base_time,
                         ),
                     ),
                     2.0,

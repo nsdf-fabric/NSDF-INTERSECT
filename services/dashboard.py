@@ -195,12 +195,15 @@ class AppState:
     def _render_andie_content(self):
         """renders the ANDiE prediction on the transition plot"""
         self.andie_header_md.object = f"""
-            <div style="border: 4px solid #FBC02D;  padding: 8px; background-color: #FFF9C4; display: flex;
-            flex-direction: column;
-            text-align: left; border-radius: 15px;
-            font-size: 18px; font-family: Arial, sans-serif;">
-           <div><strong>ANDiE Next Temperature:</strong> {self.next_temperature} K </div>
-           <div><strong>Last Update:</strong> {datetime.fromtimestamp(self.next_temperature_timestamp, tz=timezone.utc).strftime("%B %d, %Y %I:%M:%S %p UTC")}</div>
+            <div style="display: flex; gap: 16px;">
+               <div style="border: 4px solid #00662c; padding: 8px; background-color: #e0f7e0; display: inline-block;
+                    border-radius: 15px; font-size: 18px; font-family: Arial, sans-serif;">
+                    🔴 <strong>Live:</strong> {datetime.fromtimestamp(self.next_temperature_timestamp, tz=timezone.utc).strftime("%B %d, %Y %I:%M:%S %p UTC")}
+                </div>
+                <div style="border: 4px solid #FBC02D; padding: 8px; background-color: #FFF9C4; display: inline-block;
+                    border-radius: 15px; font-size: 18px; font-family: Arial, sans-serif;">
+                    <strong>ANDiE Next Temperature:</strong> {self.next_temperature} K
+                </div>
             </div>
             """
 
@@ -517,7 +520,7 @@ def App() -> MaterialTemplate:
     logger.info("initialized dashboard configuration")
 
     bragg_data_tab = pn.Column(
-        pn.Row(app_state.all_banks_header_md, app_state.andie_header_md),
+        pn.Row(app_state.all_banks_header_md),
         app_state.bragg_data_plot,
     )
 
@@ -527,7 +530,7 @@ def App() -> MaterialTemplate:
     )
 
     transition_plot_tab = pn.Column(
-        pn.Row(app_state.all_banks_header_md, app_state.andie_header_md),
+        pn.Row(app_state.andie_header_md),
         app_state.transition_plot,
     )
 

@@ -113,7 +113,7 @@ def generate_transition_msg(
     )
 
 
-def generate_next_temp_msg(id: str, temp: float):
+def generate_next_temp_msg(id: str, temp: float, base_time: int):
     return (
         IntersectDirectMessageParams(
             destination="nsdf.cloud.diffraction.dashboard.dashboard-service",
@@ -121,7 +121,7 @@ def generate_next_temp_msg(id: str, temp: float):
             payload=NextTemperature(
                 id=id,
                 data=temp,
-                timestamp=int(time.time()),
+                timestamp=base_time,
             ),
         ),
         2.0,
@@ -140,10 +140,12 @@ def generate_campaign(
     id = str(uuid4())
 
     temps = generate_temperatures(npoints)
+    base_time = int(time.time())
     for i in range(npoints):
+        base_time = base_time + 2
         next_temp = temps[i + 1] if i + 1 < npoints else temps[i]
         campaign.append(generate_transition_msg(id, temps[i], ylen))
-        campaign.append(generate_next_temp_msg(id, next_temp))
+        campaign.append(generate_next_temp_msg(id, next_temp, base_time))
 
     campaign.append(
         (
