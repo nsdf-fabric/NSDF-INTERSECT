@@ -8,7 +8,7 @@
   # proxy
   proxy:
     systemName: &proxy-systemName "nsdf.cloud.diffraction."
-    log_level: &proxy-loglevel "info"  # set to "debug" if you want extremely verbose output, including of the messages themselves
+    log_level: &proxy-loglevel "debug"  # set to "debug" if you want extremely verbose output, including of the messages themselves
 
     server:
       serverUsername: &proxy-serverUsername "proxy_username"
