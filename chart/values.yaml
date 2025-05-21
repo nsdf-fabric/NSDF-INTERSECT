@@ -36,6 +36,16 @@ volumeMount:
   dashboardPath: "/share"
   dashboardServicePath: "/share"
 
+extraVolumes:
+  - name: bragg-volume
+    emptyDir: {}
+  - name: transition-volume
+    emptyDir: {}
+  - name: andie-volume
+    emptyDir: {}
+  - name: scientist-cloud-volume
+    emptyDir: {}
+
 ### Section that needs to be fixed ###
 # TODO: fix this to make sense for this application
 pdb:
@@ -65,8 +75,8 @@ lifecycleHooks: {}
 extraEnvVars: []
 extraEnvVarsCM: ""
 extraEnvVarsSecret: ""
-extraVolumes: []
-etraVolumeMounts: []
+# extraVolumes: []
+extraVolumeMounts: []
 initContainers: []
 sidecars: []
 
@@ -97,6 +107,16 @@ dashboard:
     http: 10042
 
   extraContainerPorts: []
+
+  extraVolumeMounts:
+    - name: bragg-volume
+      mountPath: /usr/src/dashboard/bragg_volume
+    - name: transition-volume
+      mountPath: /usr/src/dashboard/transition_volume
+    - name: andie-volume
+      mountPath: /usr/src/dashboard/andie_volume
+    - name: scientist-cloud-volume
+      mountPath: /usr/src/dashboard/scientist_cloud_volume
 
   # TODO figure out halfway decent probes
 
@@ -230,8 +250,16 @@ dashboardService:
   extraEnvVars: []
   extraEnvVarsCM: ""
   extraEnvVarsSecret: ""
-  extraVolumeMounts: []
 
+  extraVolumeMounts:
+    - name: bragg-volume
+      mountPath: /usr/src/dashboard_service/bragg_volume
+    - name: transition-volume
+      mountPath: /usr/src/dashboard_service/transition_volume
+    - name: andie-volume
+      mountPath: /usr/src/dashboard_service/andie_volume
+    - name: scientist-cloud-volume
+      mountPath: /usr/src/dashboard_service/scientist_cloud_volume
 
 ### Kubernetes role stuff
 
@@ -245,5 +273,3 @@ serviceAccount:
 #
 # See README on format
 intersectConfig: {}
-
-

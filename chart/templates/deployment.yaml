@@ -180,7 +180,7 @@ spec:
           - name: shared-volume
             mountPath: {{ .Values.volumeMount.dashboardServicePath | quote }}
           {{- if .Values.dashboardService.extraVolumeMounts }}
-          {{- include "common.tplvalues.render" (dict "value" .Values.dashboardService.extraVolumeMounts "context" $) | nindent 12 }}
+          {{- include "common.tplvalues.render" (dict "value" .Values.dashboardService.extraVolumeMounts "context" $) | nindent 10 }}
           {{- end }}
         {{- if .Values.sidecars }}
         {{- include "common.tplvalues.render" ( dict "value" .Values.sidecars "context" $) | nindent 8 }}
