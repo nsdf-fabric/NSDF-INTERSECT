@@ -8,8 +8,8 @@ RUN python -m pip install pyyaml
 
 COPY ./services/dashboard_service.py ./dashboard_service.py
 COPY ./services/constants.py ./constants.py
-COPY ./config/config_service.yaml /app/config_default.yaml
-COPY ./config/config_dashboard.yaml /app/config_dashboard_default.yaml
+COPY ./config/config_service.yaml /config/config_default.yaml
+COPY ./config/config_dashboard.yaml /config/config_dashboard_default.yaml
 
 EXPOSE 10043
 

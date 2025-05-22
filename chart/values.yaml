@@ -44,7 +44,8 @@ extraVolumes:
   - name: andie-volume
     emptyDir: {}
   - name: scientist-cloud-volume
-    emptyDir: {}
+    persistentVolumeClaim:
+      claimName: scientist-cloud-pvc
 
 ### Section that needs to be fixed ###
 # TODO: fix this to make sense for this application

@@ -50,7 +50,7 @@ services:
     ports:
       - "10043:10043"
     environment:
-      INTERSECT_SERVICE_CONFIG: "/app/config_default.yaml"
+      INTERSECT_SERVICE_CONFIG: "/config/config_default.yaml"
     depends_on:
       broker:
         condition: service_healthy
