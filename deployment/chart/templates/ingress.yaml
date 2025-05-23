@@ -24,7 +24,7 @@ spec:
               number: 9071
       # root path needs to be last
       - pathType: ImplementationSpecific 
-        path: (/|$)(.*)
+        path: /(|$)(.*)
         backend:
           service:
             name: nsdf-intersect-intersect-message-broker-1
