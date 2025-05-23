@@ -123,8 +123,7 @@ class TestRenderers:
         assert len(configured_app.transition_data_dict["data"]) == 3
         # The last trace in the transition content should always be the ANDiE prediction trace
         assert (
-            configured_app.transition_data_dict["data"][-1].name
-            == "ANDiE Next Temperature"
+            configured_app.transition_data_dict["data"][-1].name == "Next Temperature"
         )
         assert (
             "cb199084-91ec-4b9b-898d-024d1920b8cb"
@@ -136,8 +135,7 @@ class TestRenderers:
         configured_app._render_andie_content()
         assert len(configured_app.transition_data_dict["data"]) > 0
         assert (
-            configured_app.transition_data_dict["data"][-1].name
-            == "ANDiE Next Temperature"
+            configured_app.transition_data_dict["data"][-1].name == "Next Temperature"
         )
         assert configured_app.andie_header_md != """"""
 
