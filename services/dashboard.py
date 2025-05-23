@@ -63,7 +63,7 @@ class AppState:
                     mode="lines",
                     x=[],
                     y=[],
-                    name="ANDiE Next Temperature",
+                    name="Next Temperature",
                     line=dict(width=3, color="green", dash="dash"),
                 )
             ],
@@ -183,7 +183,7 @@ class AppState:
                 mode="lines",
                 x=[self.next_temperature, self.next_temperature],
                 y=[0.0, maxY],
-                name="ANDiE Next Temperature",
+                name="Next Temperature",
                 line=dict(width=3, color="green", dash="dash"),
             )
         )
@@ -202,7 +202,7 @@ class AppState:
                 </div>
                 <div style="border: 4px solid #FBC02D; padding: 8px; background-color: #FFF9C4; display: inline-block;
                     border-radius: 15px; font-size: 18px; font-family: Arial, sans-serif;">
-                    <strong>ANDiE Next Temperature:</strong> {self.next_temperature} K
+                    <strong>Next Temperature:</strong> {self.next_temperature} K
                 </div>
             </div>
             """
