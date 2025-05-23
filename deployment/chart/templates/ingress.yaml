@@ -22,3 +22,10 @@ spec:
             name: nsdf-intersect-proxy-http-server
             port:
               number: 9071
+      - pathType: ImplementationSpecific 
+        path: /messages(/|$)(.*)
+        backend:
+          service:
+            name: nsdf-intersect-intersect-message-broker-1
+            port:
+              number: 15672
