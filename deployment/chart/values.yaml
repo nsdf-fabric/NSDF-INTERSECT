@@ -95,20 +95,20 @@ intersect:
         # cpu: "16"
         # ephemeral-storage: "4Gi"
     # need to override extraConfiguration because we need to set a management path prefix
-    extraConfiguration: |-
-      default_vhost = /
-      {{- if .Values.resources.limits.storage }}
-      disk_free_limit.absolute = {{ .Values.resources.limits.storage }}
-      {{- else }}
-      disk_free_limit.relative = 0.4
-      {{- end }}
-      {{- if .Values.resources.requests.cpu }}
-      delegate_count = {{ .Values.resources.requests.cpu }}
-      {{- end }}
-      mqtt.max_session_expiry_interval_seconds = infinity
+    #extraConfiguration: |-
+      #default_vhost = /
+      #{{- if .Values.resources.limits.storage }}
+      #disk_free_limit.absolute = {{ .Values.resources.limits.storage }}
+      #{{- else }}
+      #disk_free_limit.relative = 0.4
+      #{{- end }}
+      #{{- if .Values.resources.requests.cpu }}
+      #delegate_count = {{ .Values.resources.requests.cpu }}
+      #{{- end }}
+      #mqtt.max_session_expiry_interval_seconds = infinity
       # set this to the maximum allowed by rabbitmq - https://www.rabbitmq.com/docs/configure#config-items
-      max_message_size = 536870912
-      management.path_prefix = /messages
+      #max_message_size = 536870912
+      #management.path_prefix = /messages
 
   intersect-storage-1:
     # we shouldn't need MINIO for this deployment
