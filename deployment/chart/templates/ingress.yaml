@@ -27,6 +27,6 @@ spec:
         path: /(|$)(.*)
         backend:
           service:
-            name: nsdf-intersect-intersect-message-broker-1
+            name: nsdf-services-nsdf-intersect-dashboard
             port:
-              number: 15672
+              number: 10042
