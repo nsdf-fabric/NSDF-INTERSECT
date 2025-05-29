@@ -156,12 +156,13 @@ class AppState:
     def _render_transition_content(self):
         """renders the transition plot using transition volume"""
         temp, ylist, traces = [], [], []
-        maxY = 0.0
+        maxX, maxY = self.next_temperature, 0.0
         with open(os.path.join(self.config['volumes']['transition_volume'], f"{self.id_campaign}_transition.txt")) as f:
             for line in f:
                 data_tuple = line.strip().split(",")
                 temp.append(float(data_tuple[1]))
                 ylist.append([float(y) for y in data_tuple[2:]])
+                maxX = max(maxX, temp[-1])
                 maxY = max(maxY, max(ylist[-1]))
 
         # create traces
@@ -189,6 +190,7 @@ class AppState:
         )
         # patching transition plot
         self.transition_data_dict["data"] = traces
+        self.transition_data_dict["layout"].xaxis.range = [130, max(maxX, self.next_temperature) + 20]
         self.transition_data_dict["layout"].title.text = f"Campaign: {self.id_campaign}"
         self.transition_plot.object = self.transition_data_dict
 
@@ -212,7 +214,9 @@ class AppState:
             self.next_temperature,
             self.next_temperature,
         ]
-
+        maxX = self.transition_data_dict["layout"].xaxis.range[-1]
+        if self.next_temperature > maxX:
+            self.transition_data_dict["layout"].xaxis.range = [130, self.next_temperature + 20]
         # patching transition plot
         self.transition_plot.object = self.transition_data_dict
 
@@ -254,7 +258,8 @@ class AppState:
     def _render_bragg_plot(self):
         """renders a gsas workspace in the bragg plot and by bank tabs"""
         if self.current_bragg_file != "":
-            self.lastUpdate = datetime.now().strftime("%B %d, %Y %I:%M:%S %p UTC")
+            ts = int(self.current_bragg_file.split("_")[0])
+            self.lastUpdate = datetime.fromtimestamp(ts, tz=timezone.utc).strftime("%B %d, %Y %I:%M:%S %p UTC")
             # patching header
             self.all_banks_header_md.object = f"""
             <div style="border: 4px solid #00662c; padding: 8px; background-color: #e0f7e0; display: inline-block;
