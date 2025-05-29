@@ -156,12 +156,13 @@ class AppState:
     def _render_transition_content(self):
         """renders the transition plot using transition volume"""
         temp, ylist, traces = [], [], []
-        maxY = 0.0
+        maxX, maxY = self.next_temperature, 0.0
         with open(os.path.join(self.config['volumes']['transition_volume'], f"{self.id_campaign}_transition.txt")) as f:
             for line in f:
                 data_tuple = line.strip().split(",")
                 temp.append(float(data_tuple[1]))
                 ylist.append([float(y) for y in data_tuple[2:]])
+                maxX = max(maxX, temp[-1])
                 maxY = max(maxY, max(ylist[-1]))
 
         # create traces
@@ -189,6 +190,7 @@ class AppState:
         )
         # patching transition plot
         self.transition_data_dict["data"] = traces
+        self.transition_data_dict["layout"].xaxis.range = [0, max(maxX, self.next_temperature) + 20]
         self.transition_data_dict["layout"].title.text = f"Campaign: {self.id_campaign}"
         self.transition_plot.object = self.transition_data_dict
 
@@ -212,7 +214,8 @@ class AppState:
             self.next_temperature,
             self.next_temperature,
         ]
-
+        maxX = self.transition_data_dict["layout"].xaxis.range[-1]
+        self.transition_data_dict["layout"].xaxis.range = [0, max(maxX, self.next_temperature) + 20]
         # patching transition plot
         self.transition_plot.object = self.transition_data_dict
 
