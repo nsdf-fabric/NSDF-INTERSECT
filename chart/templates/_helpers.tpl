@@ -13,10 +13,17 @@ Return the proper dashboard service image name (Service)
 {{- end -}}
 
 {{/*
+Return the proper storage image name (Service)
+*/}}
+{{- define "nsdf-intersect-dashboard.storageService.image" -}}
+{{- include "common.images.image" (dict "imageRoot" .Values.storageService.image "global" .Values.global) -}}
+{{- end -}}
+
+{{/*
 Return the proper Container Image Registry secret names
 */}}
 {{- define "nsdf-intersect-dashboard.imagePullSecrets" -}}
-{{- include "common.images.renderPullSecrets" (dict "images" ( concat (list .Values.dashboard.image .Values.dashboardService.image ) ) "context" $) -}}
+{{- include "common.images.renderPullSecrets" (dict "images" ( concat (list .Values.dashboard.image .Values.dashboardService.image .Values.storageService.image) ) "context" $) -}}
 {{- end -}}
 
 

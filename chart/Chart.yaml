@@ -1,6 +1,6 @@
 apiVersion: v2
-name: nsdf-intersect-dashboard
-description: "NSDF INTERSECT Diffraction Dashboard Service"
+name: nsdf-intersect
+description: "NSDF INTERSECT Diffraction Services"
 version: 0.1.0
 dependencies:
   - name: common

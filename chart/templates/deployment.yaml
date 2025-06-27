@@ -119,8 +119,6 @@ spec:
           lifecycle: {{- include "common.tplvalues.render" (dict "value" .Values.lifecycleHooks "context" $) | nindent 12 }}
           {{- end }}
           volumeMounts:
-            - name: shared-volume
-              mountPath: {{ .Values.volumeMount.dashboardPath | quote }}
           {{- if .Values.dashboard.extraVolumeMounts }}
           {{- include "common.tplvalues.render" (dict "value" .Values.dashboard.extraVolumeMounts "context" $) | nindent 12 }}
           {{- end }}
@@ -177,8 +175,6 @@ spec:
           volumeMounts:
           - name: intersect-config
             mountPath: /app/
-          - name: shared-volume
-            mountPath: {{ .Values.volumeMount.dashboardServicePath | quote }}
           {{- if .Values.dashboardService.extraVolumeMounts }}
           {{- include "common.tplvalues.render" (dict "value" .Values.dashboardService.extraVolumeMounts "context" $) | nindent 10 }}
           {{- end }}
@@ -186,13 +182,59 @@ spec:
         {{- include "common.tplvalues.render" ( dict "value" .Values.sidecars "context" $) | nindent 8 }}
         {{- end }}
 
+        - name: {{ .Chart.Name }}-storage
+          image: {{ template "nsdf-intersect-dashboard.storageService.image" . }}
+          imagePullPolicy: {{ .Values.storageService.image.pullPolicy }}
+          {{- if .Values.containerSecurityContext.enabled }}
+          securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if .Values.storageService.diagnosticMode.enabled }}
+          command: {{- include "common.tplvalues.render" (dict "value" .Values.storageService.diagnosticMode.command "context" $) | nindent 12 }}
+          {{- else if .Values.storageService.command }}
+          command: {{- include "common.tplvalues.render" (dict "value" .Values.storageService.command "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.storageService.diagnosticMode.enabled }}
+          args: {{- include "common.tplvalues.render" (dict "value" .Values.storageService.diagnosticMode.args "context" $) | nindent 12 }}
+          {{- else if .Values.args }}
+          args: {{- include "common.tplvalues.render" (dict "value" .Values.storageService.args "context" $) | nindent 12 }}
+          {{- end }}
+          env:
+            {{- if .Values.storageService.extraEnvVars }}
+            {{- include "common.tplvalues.render" (dict "value" .Values.storageService.extraEnvVars "context" $) | nindent 12 }}
+            {{- end }}
+          envFrom:
+            {{- if .Values.storageService.extraEnvVarsCM }}
+            - configMapRef:
+                name: {{ include "common.tplvalues.render" (dict "value" .Values.storageService.extraEnvVarsCM "context" $) }}
+            {{- end }}
+            - secretRef:
+                name: {{ template "common.names.fullname" . }}-secret-storage-config
+          {{- if .Values.resources }}
+          resources: {{- toYaml .Values.storageService.resources | nindent 12 }}
+          {{- end }}
+          {{- if not .Values.storageService.diagnosticMode.enabled }}
+          {{- if .Values.storageService.customLivenessProbe }}
+          livenessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.storageService.customLivenessProbe "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.storageService.customReadinessProbe }}
+          readinessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.storageService.customReadinessProbe "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.storageService.customStartupProbe }}
+          startupProbe: {{- include "common.tplvalues.render" (dict "value" .Values.storageService.customStartupProbe "context" $) | nindent 12 }}
+          {{- end }}
+          {{- end }}
+          {{- if .Values.lifecycleHooks }}
+          lifecycle: {{- include "common.tplvalues.render" (dict "value" .Values.lifecycleHooks "context" $) | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+          {{- if .Values.storageService.extraVolumeMounts }}
+          {{- include "common.tplvalues.render" (dict "value" .Values.storageService.extraVolumeMounts "context" $) | nindent 12 }}
+          {{- end }}
+
       volumes:
         - name: intersect-config
           secret:
             secretName: {{ template "common.names.fullname" . }}-secret-intersect-config
-            path: config.yaml
-        - name: "shared-volume"
-          emptyDir: {}
         {{- if .Values.extraVolumes }}
         {{- include "common.tplvalues.render" (dict "value" .Values.extraVolumes "context" $) | nindent 8 }}
         {{- end }}

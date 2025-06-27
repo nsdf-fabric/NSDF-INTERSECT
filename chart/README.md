@@ -32,7 +32,19 @@ intersectConfig:
     service: dashboard-service
 ```
 
+Example of `storageConfig` for values.yaml:
+
+```yaml
+storageConfig:
+  PROFILE_NAME: my-profile-name
+  ENDPOINT_URL: my-endpoint-url
+  BUCKET_NAME: my-bucket-name
+  ACCESS_KEY_ID: my-access-key-id
+  SECRET_ACCESS_KEY: my-secret-access-key
+```
+
 Example of node port for dashboard (served on 30180 of cluster):
+
 ```
 dashboard:
   service:

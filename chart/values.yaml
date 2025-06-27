@@ -32,20 +32,7 @@ podAntiAffinityPreset: soft
 
 ### Shared Volume Mount ###
 
-volumeMount:
-  dashboardPath: "/share"
-  dashboardServicePath: "/share"
-
-extraVolumes:
-  - name: bragg-volume
-    emptyDir: {}
-  - name: transition-volume
-    emptyDir: {}
-  - name: andie-volume
-    emptyDir: {}
-  - name: scientist-cloud-volume
-    persistentVolumeClaim:
-      claimName: scientist-cloud-pvc
+volumeMount: {}
 
 ### Section that needs to be fixed ###
 # TODO: fix this to make sense for this application
@@ -76,7 +63,16 @@ lifecycleHooks: {}
 extraEnvVars: []
 extraEnvVarsCM: ""
 extraEnvVarsSecret: ""
-# extraVolumes: []
+extraVolumes:
+  - name: bragg-volume
+    emptyDir: {}
+  - name: transition-volume
+    emptyDir: {}
+  - name: andie-volume
+    emptyDir: {}
+  - name: scientist-cloud-volume
+    persistentVolumeClaim:
+      claimName: scientist-cloud-pvc
 extraVolumeMounts: []
 initContainers: []
 sidecars: []
@@ -262,6 +258,81 @@ dashboardService:
     - name: scientist-cloud-volume
       mountPath: /usr/src/dashboard_service/scientist_cloud_volume
 
+## NSDF Storage Service
+storageService:
+  enabled: true
+
+  ### container image
+  image:
+    registry: ghcr.io
+    repository: nsdf-fabric/intersect-storage
+    tag: "latest"
+    digest: ""
+    pullPolicy: ""
+    pullSecrets: []
+
+  diagnosticMode:
+    enabled: false
+    command:
+      - sleep
+    args:
+      - infinity
+
+  livenessProbe: # the application developers should help determine sane default params
+    enabled: true
+    initialDelaySeconds: 30
+    periodSeconds: 5
+    timeoutSeconds: 10
+    failureThreshold: 6
+    successThreshold: 1
+
+  readinessProbe: # the application developers should help determine sane default params
+    enabled: true
+    initialDelaySeconds: 5
+    timeoutSeconds: 3
+    periodSeconds: 5
+    failureThreshold: 3
+    successThreshold: 1
+
+  startupProbe: # the application developers should help determine sane default params
+    enabled: false
+    initialDelaySeconds: 30
+    periodSeconds: 5
+    timeoutSeconds: 10
+    failureThreshold: 6
+    successThreshold: 1
+
+  customLivenessProbe: {}
+  customReadinessProbe: {}
+  customStartupProbe: {}
+
+  resources:
+    limits: {}
+    requests: {}
+
+  containerSecurityContext:
+    enabled: false
+    runAsUser: 1001
+    runAsNonRoot: true
+    readOnlyRootFilesystem: false
+
+  command: []
+  args: []
+
+  extraEnvVars: []
+  extraEnvVarsCM: ""
+  extraEnvVarsSecret: ""
+
+  extraVolumeMounts:
+    - name: bragg-volume
+      mountPath: /usr/src/storage_service/bragg_volume
+    - name: transition-volume
+      mountPath: /usr/src/storage_service/transition_volume
+    - name: andie-volume
+      mountPath: /usr/src/storage_service/andie_volume
+    - name: scientist-cloud-volume
+      mountPath: /usr/src/storage_service/scientist_cloud_volume
+
 ### Kubernetes role stuff
 
 serviceAccount:
@@ -274,3 +345,9 @@ serviceAccount:
 #
 # See README on format
 intersectConfig: {}
+storageConfig:
+  PROFILE_NAME: ""
+  ENDPOINT_URL: ""
+  BUCKET_NAME: ""
+  ACCESS_KEY_ID: ""
+  SECRET_ACCESS_KEY: ""
