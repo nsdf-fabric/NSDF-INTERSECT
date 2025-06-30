@@ -208,7 +208,7 @@ spec:
                 name: {{ include "common.tplvalues.render" (dict "value" .Values.storageService.extraEnvVarsCM "context" $) }}
             {{- end }}
             - secretRef:
-                name: {{ template "common.names.fullname" . }}-secret-storage-config
+                name: {{ include "common.names.fullname" . }}-secret-storage-config
           {{- if .Values.resources }}
           resources: {{- toYaml .Values.storageService.resources | nindent 12 }}
           {{- end }}
@@ -227,14 +227,23 @@ spec:
           lifecycle: {{- include "common.tplvalues.render" (dict "value" .Values.lifecycleHooks "context" $) | nindent 12 }}
           {{- end }}
           volumeMounts:
+          - name: storage-config
+            mountPath: /app/
+            readOnly: true
           {{- if .Values.storageService.extraVolumeMounts }}
-          {{- include "common.tplvalues.render" (dict "value" .Values.storageService.extraVolumeMounts "context" $) | nindent 12 }}
+          {{- include "common.tplvalues.render" (dict "value" .Values.storageService.extraVolumeMounts "context" $) | nindent 10 }}
           {{- end }}
 
       volumes:
         - name: intersect-config
           secret:
             secretName: {{ template "common.names.fullname" . }}-secret-intersect-config
+        - name: dashboard-config
+          configMap:
+            name: {{ include "common.names.fullname" . }}-config-dashboard
+        - name: storage-config
+          configMap:
+            name: {{ include "common.names.fullname" . }}-config-storage
         {{- if .Values.extraVolumes }}
         {{- include "common.tplvalues.render" (dict "value" .Values.extraVolumes "context" $) | nindent 8 }}
         {{- end }}
