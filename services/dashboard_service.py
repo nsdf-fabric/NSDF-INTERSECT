@@ -12,10 +12,6 @@ import time
 from typing import List
 import yaml
 import uuid
-from constants import (
-    INTERSECT_SERVICE_CONFIG,
-    INTERSECT_DASHBOARD_CONFIG,
-)
 
 from intersect_sdk import (
     IntersectBaseCapabilityImplementation,
@@ -151,7 +147,7 @@ class DashboardCapability(IntersectBaseCapabilityImplementation):
         super().__init__()
         self.config = {}
         config_path = os.getenv(
-            INTERSECT_DASHBOARD_CONFIG, "/config/config_dashboard_default.yaml"
+            "INTERSECT_DASHBOARD_CONFIG", "/config/config_dashboard_default.yaml"
         )
         try:
             with open(config_path) as f:
@@ -295,7 +291,7 @@ def dashboard_service():
     Initializes service to query data for the dashboard.
     """
     from_config_file = {}
-    config_path = os.getenv(INTERSECT_SERVICE_CONFIG, "/config/config_default.yaml")
+    config_path = os.getenv("INTERSECT_SERVICE_CONFIG", "/config/config_default.yaml")
     with open(config_path) as f:
         from_config_file = yaml.safe_load(f)
 

@@ -18,7 +18,6 @@ import subprocess
 import random
 import concurrent.futures
 import yaml
-from constants import INTERSECT_STORAGE_CONFIG
 
 
 logger = logging.getLogger(__name__)
@@ -108,7 +107,7 @@ def get_bucket():
 
 def main():
     config = {}
-    config_path = os.getenv(INTERSECT_STORAGE_CONFIG, "/app/config_storage.yaml")
+    config_path = os.getenv("INTERSECT_STORAGE_CONFIG", "/app/config_storage.yaml")
     try:
         with open(config_path) as f:
             config = yaml.safe_load(f)
