@@ -6,12 +6,14 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV BOKEH_ALLOW_WS_ORIGIN="*"
 
-WORKDIR /app
-COPY . /app
+WORKDIR /usr/src/dashboard
+COPY ./pyproject.toml ./
+COPY ./uv.lock ./
 RUN uv sync --locked
 
-# Expose the port
+COPY src/nsdf_intersect_dashboard/ .
+COPY ./src/nsdf_intersect_dashboard/config_dashboard.yaml /config/config_dashboard_default.yaml
+
 EXPOSE 10042
 
-# Run the FastAPI app
 CMD ["uv", "run", "panel", "serve", "dashboard.py", "--address", "0.0.0.0", "--allow-websocket-origin", "*", "--port", "10042"]

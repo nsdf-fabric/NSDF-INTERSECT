@@ -7,28 +7,28 @@ Description: Unit tests for the dashboard.
 
 from __future__ import annotations
 import os
-from services import AppState, App
+from nsdf_intersect_dashboard.dashboard import AppState, App
 import pytest
 
 
 @pytest.fixture
 def bragg_volume():
-    return "./tests/fixtures/bragg_volume"
+    return "./src/tests/fixtures/bragg_volume"
 
 
 @pytest.fixture
 def transition_volume():
-    return "./tests/fixtures/transition_volume"
+    return "./src/tests/fixtures/transition_volume"
 
 
 @pytest.fixture
 def andie_volume():
-    return "./tests/fixtures/andie_volume"
+    return "./src/tests/fixtures/andie_volume"
 
 
 @pytest.fixture
 def scientist_cloud_volume():
-    return "./tests/fixtures/scientist_cloud_volume"
+    return "./src/tests/fixtures/scientist_cloud_volume"
 
 
 @pytest.fixture
@@ -62,7 +62,7 @@ class TestInitialization:
 
 class TestPollingMethods:
     def test_no_volume_poll_bragg(
-        self, unconfigured_app, caplog: pytest.LogCaptureFixture
+        self, unconfigured_app: AppState, caplog: pytest.LogCaptureFixture
     ):
         unconfigured_app.poll_bragg()
         assert "Bragg volume:  not found, skipping checks..." in caplog.text
@@ -73,12 +73,12 @@ class TestPollingMethods:
         assert len(os.listdir(bragg_volume)) == 1
 
     def test_no_volume_poll_transition(
-        self, unconfigured_app, caplog: pytest.LogCaptureFixture
+        self, unconfigured_app: AppState, caplog: pytest.LogCaptureFixture
     ):
         unconfigured_app.poll_transition()
         assert "Transition volume:  not found, skipping checks..." in caplog.text
 
-    def test_poll_transition(self, configured_app, transition_volume):
+    def test_poll_transition(self, configured_app: AppState, transition_volume):
         configured_app.poll_transition()
         assert configured_app.id_campaign == "cb199084-91ec-4b9b-898d-024d1920b8cb"
         assert configured_app.id_transition == "6fb0c800-b960-4af7-a6e1-3ebbf73c2a6d"
@@ -90,24 +90,24 @@ class TestPollingMethods:
         unconfigured_app.poll_andie()
         assert "ANDiE volume:  not found, skipping checks..." in caplog.text
 
-    def test_poll_andie(self, configured_app):
+    def test_poll_andie(self, configured_app: AppState):
         configured_app.poll_andie()
         assert configured_app.id_andie == "8cdcb065-4b0f-4473-bfb7-d715965f8e13"
 
 
 class TestLoaders:
-    def test_load_stateful_files(self, configured_app):
+    def test_load_stateful_files(self, configured_app: AppState):
         timestamp_to_filename = configured_app._load_stateful_files()
         assert len(timestamp_to_filename) == 5
 
-    def test_load_workspace(self, configured_app):
+    def test_load_workspace(self, configured_app: AppState):
         configured_app._load_workspace("1743619484_NOM168366tof.gsa")
         assert len(configured_app.bragg_data.keys()) == 6
         assert len(configured_app.bragg_data[1]) == 3
 
 
 class TestRenderers:
-    def test_render_bragg_plot(self, configured_app):
+    def test_render_bragg_plot(self, configured_app: AppState):
         configured_app.poll_bragg()
         configured_app._render_bragg_plot()
         assert len(configured_app.bragg_data_by_bank) == 6
@@ -117,7 +117,7 @@ class TestRenderers:
         assert configured_app.minX >= 0.0
         assert configured_app.minY >= 0.0
 
-    def test_render_transition_content(self, configured_app):
+    def test_render_transition_content(self, configured_app: AppState):
         configured_app.poll_transition()
         configured_app._render_transition_content()
         assert len(configured_app.transition_data_dict["data"]) == 3
@@ -130,7 +130,7 @@ class TestRenderers:
             in configured_app.transition_data_dict["layout"].title.text
         )
 
-    def test_render_andie_content(self, configured_app):
+    def test_render_andie_content(self, configured_app: AppState):
         configured_app.poll_andie()
         configured_app._render_andie_content()
         assert len(configured_app.transition_data_dict["data"]) > 0
@@ -139,13 +139,13 @@ class TestRenderers:
         )
         assert configured_app.andie_header_md != """"""
 
-    def test_render_information_content(self, configured_app):
+    def test_render_information_content(self, configured_app: AppState):
         configured_app._render_information_content()
         assert configured_app.information_md != """"""
 
 
 class TestReactivity:
-    def test_update_stateful_plot(self, configured_app):
+    def test_update_stateful_plot(self, configured_app: AppState):
         configured_app.update_stateful_plot("1743619479_NOM168364tof.gsa")
         assert configured_app.stateful_plot_header_md != """"""
         assert len(configured_app.stateful_plot_data_dict["data"]) > 0
@@ -154,24 +154,24 @@ class TestReactivity:
             in configured_app.stateful_plot_data_dict["layout"].title.text
         )
 
-    def test_reset_limits(self, configured_app):
+    def test_reset_limits(self, configured_app: AppState):
         configured_app.maxX = 10.0
         configured_app.maxY = 15.0
         configured_app.reset_limits("")
         assert configured_app.xlim_slider.value >= 10.0
         assert configured_app.ylim_slider.value >= 15.0
 
-    def test_update_x_limit(self, configured_app):
+    def test_update_x_limit(self, configured_app: AppState):
         configured_app.update_x_limit(10)
         assert configured_app.bragg_data_dict["layout"].xaxis.range[1] == 10
 
-    def test_update_y_limit(self, configured_app):
+    def test_update_y_limit(self, configured_app: AppState):
         configured_app.update_y_limit(10)
         assert configured_app.bragg_data_dict["layout"].yaxis.range[1] == 10
 
 
 class TestHelpers:
-    def test_last_id(self, configured_app):
+    def test_last_id(self, configured_app: AppState):
         last_id_transition = configured_app._last_id(
             "TRANSITION", "cb199084-91ec-4b9b-898d-024d1920b8cb_transition.txt"
         )

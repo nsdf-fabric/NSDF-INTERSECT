@@ -1,0 +1,10 @@
+[project]
+name = "nsdf-intersect-service"
+version = "0.1.0"
+description = "The NSDF-INTERSECT service"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "intersect-sdk[amqp]",
+    "pyyaml"
+]

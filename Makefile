@@ -3,13 +3,13 @@ dev:
 	@panel serve ./src/dashboard.py --show --dev
 # Docker
 dashboard:
-	@docker build -t intersect-dashboard -f Dockerfile.dashboard .
+	@docker build -t intersect-dashboard:uv services/nsdf_intersect_dashboard
 
 service:
-	@docker build -t intersect-service -f Dockerfile.dashboard_service .
+	@docker build -t intersect-service:uv services/nsdf_intersect_service
 
 storage:
-	@docker build -t intersect-storage -f Dockerfile.storage_service .
+	@docker build -t intersect-storage:uv services/nsdf_intersect_storage 
 
 up:
 	@docker compose -f compose_local.yaml up -d

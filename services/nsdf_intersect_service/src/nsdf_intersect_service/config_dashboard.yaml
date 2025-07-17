@@ -1,0 +1,9 @@
+volumes:
+  bragg_volume: "bragg_volume"
+  transition_volume: "transition_volume"
+  andie_volume: "andie_volume"
+  scientist_cloud_volume: "scientist_cloud_volume"
+scan_period:
+  bragg_scan_period: 2
+  transition_scan_period: 2
+  select_scan_period: 45

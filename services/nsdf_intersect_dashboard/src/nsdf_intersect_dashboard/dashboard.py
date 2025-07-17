@@ -18,6 +18,7 @@ import yaml
 from gsa_loader import load_gsa_file
 
 
+
 logger = logging.getLogger(__name__)
 logging.basicConfig(
     filename='nsdf-intersect-dashboard.log',
@@ -508,7 +509,7 @@ def App() -> MaterialTemplate:
     pn.extension("plotly")
     app_state = AppState()
 
-    config_path = os.getenv("INTERSECT_DASHBOARD_CONFIG", "/app/config_dashboard_default.yaml")
+    config_path = os.getenv("INTERSECT_DASHBOARD_CONFIG", "/config/config_dashboard_default.yaml")
     try:
         with open(config_path) as f:
             app_state.config = yaml.safe_load(f)
