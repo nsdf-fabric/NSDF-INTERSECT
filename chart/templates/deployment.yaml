@@ -119,8 +119,11 @@ spec:
           lifecycle: {{- include "common.tplvalues.render" (dict "value" .Values.lifecycleHooks "context" $) | nindent 12 }}
           {{- end }}
           volumeMounts:
+          - name: dashboard-config
+            mountPath: /app/
+            readOnly: true
           {{- if .Values.dashboard.extraVolumeMounts }}
-          {{- include "common.tplvalues.render" (dict "value" .Values.dashboard.extraVolumeMounts "context" $) | nindent 12 }}
+          {{- include "common.tplvalues.render" (dict "value" .Values.dashboard.extraVolumeMounts "context" $) | nindent 10 }}
           {{- end }}
   
 
