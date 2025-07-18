@@ -28,7 +28,7 @@ jobs:
       - name: Install dependencies
         working-directory: services/nsdf_intersect_dashboard
         run: |
-          uv sync --locked --all-extras --dev
+          uv sync --locked --all-extras --test
 
       - name: Run tests
         working-directory: services/nsdf_intersect_dashboard
