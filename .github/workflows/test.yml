@@ -29,7 +29,6 @@ jobs:
         working-directory: services/nsdf_intersect_dashboard
         run: |
           uv sync --locked --all-extras --dev
-          uv pip install pytest
 
       - name: Run tests
         working-directory: services/nsdf_intersect_dashboard
