@@ -10,3 +10,8 @@ dependencies = [
     "numpy",
     "plotly==6.0.0"
 ]
+
+[dependency-groups]
+test = [
+    "pytest>=8.4.1",
+]

@@ -7,28 +7,8 @@ Description: Unit tests for the dashboard.
 
 from __future__ import annotations
 import os
-from nsdf_intersect_dashboard.dashboard import AppState, App
+from dashboard import AppState, App
 import pytest
-
-
-@pytest.fixture
-def bragg_volume():
-    return "./src/tests/fixtures/bragg_volume"
-
-
-@pytest.fixture
-def transition_volume():
-    return "./src/tests/fixtures/transition_volume"
-
-
-@pytest.fixture
-def andie_volume():
-    return "./src/tests/fixtures/andie_volume"
-
-
-@pytest.fixture
-def scientist_cloud_volume():
-    return "./src/tests/fixtures/scientist_cloud_volume"
 
 
 @pytest.fixture
