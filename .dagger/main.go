@@ -65,7 +65,6 @@ func (m *NsdfIntersectCi) PublishImage(ctx context.Context, imageName string,
 	tag string,
 	// +default="ttl.sh"
 	registry string,
-	// +default=""
 	username string,
 	password *dagger.Secret,
 	// +defaultPath="services"

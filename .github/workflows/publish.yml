@@ -9,59 +9,33 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     env:
       DASHBOARD_IMAGE_NAME: intersect-dashboard
       DASHBOARD_SERVICE_IMAGE_NAME: intersect-service
       STORAGE_SERVICE_IMAGE_NAME: intersect-storage
+      USERNAME: ${{github.repository_owner}}
+      PASSWORD: ${{secrets.GITHUB_TOKEN}}
+      SHA_TAG: ${{github.sha}}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+      - uses: dagger/dagger-for-github@8.0.0
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
-      - name: Cache Docker layers
-        uses: actions/cache@v4
-        with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-docker-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-docker-
-
-      - name: Build Dashboard Docker image
+      - name: Publish Dashboard Docker image to ghcr
         run: |
-          docker build -f Dockerfile.dashboard -t ghcr.io/${{ github.repository_owner }}/${{env.DASHBOARD_IMAGE_NAME}}:latest .
-          docker build -f Dockerfile.dashboard -t ghcr.io/${{ github.repository_owner }}/${{env.DASHBOARD_IMAGE_NAME}}:${{github.sha}} .
+          dagger call publish-image --registry=ghcr.io --image-name=$DASHBOARD_IMAGE_NAME --tag=uv --username=$USERNAME --password=env:$PASSWORD
+          dagger call publish-image --registry=ghcr.io --image-name=$DASHBOARD_IMAGE_NAME --tag=$SHA_TAG --username=$USERNAME --password=env:$PASSWORD
 
-      - name: Build Dashboard Service Docker image
+      - name: Publish Dashboard Service Docker image to ghcr
         run: |
-          docker build -f Dockerfile.dashboard_service -t ghcr.io/${{ github.repository_owner }}/${{env.DASHBOARD_SERVICE_IMAGE_NAME}}:latest .
-          docker build -f Dockerfile.dashboard_service -t ghcr.io/${{ github.repository_owner }}/${{env.DASHBOARD_SERVICE_IMAGE_NAME}}:${{github.sha}} .
+          dagger call publish-image --registry=ghcr.io --image-name=$DASHBOARD_SERVICE_IMAGE_NAME --tag=uv --username=$USERNAME --password=env:$PASSWORD
+          dagger call publish-image --registry=ghcr.io --image-name=$DASHBOARD_SERVICE_IMAGE_NAME --tag=$SHA_TAG --username=$USERNAME --password=env:$PASSWORD
 
-      - name: Build Storage Service Docker image
+      - name: Publish Storage Service Docker image to ghcr
         run: |
-          docker build -f Dockerfile.storage_service -t ghcr.io/${{ github.repository_owner }}/${{env.STORAGE_SERVICE_IMAGE_NAME}}:latest .
-          docker build -f Dockerfile.storage_service -t ghcr.io/${{ github.repository_owner }}/${{env.STORAGE_SERVICE_IMAGE_NAME}}:${{github.sha}} .
-
-      - name: Log in to GHCR
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Push Dashboard Docker image to GHCR
-        run: |
-          docker push ghcr.io/${{ github.repository_owner }}/${{env.DASHBOARD_IMAGE_NAME}}:latest
-          docker push ghcr.io/${{ github.repository_owner }}/${{env.DASHBOARD_IMAGE_NAME}}:${{github.sha}}
-
-      - name: Push Dashboard Service Docker image to GHCR
-        run: |
-          docker push ghcr.io/${{ github.repository_owner }}/${{env.DASHBOARD_SERVICE_IMAGE_NAME}}:latest
-          docker push ghcr.io/${{ github.repository_owner }}/${{env.DASHBOARD_SERVICE_IMAGE_NAME}}:${{github.sha}}
-
-      - name: Push Storage Service Docker image to GHCR
-        run: |
-          docker push ghcr.io/${{ github.repository_owner }}/${{env.STORAGE_SERVICE_IMAGE_NAME}}:latest
-          docker push ghcr.io/${{ github.repository_owner }}/${{env.STORAGE_SERVICE_IMAGE_NAME}}:${{github.sha}}
+          dagger call publish-image --registry=ghcr.io --image-name=$STORAGE_SERVICE_IMAGE_NAME --tag=uv --username=$USERNAME --password=env:$PASSWORD
+          dagger call publish-image --registry=ghcr.io --image-name=$STORAGE_SERVICE_IMAGE_NAME --tag=$SHA_TAG --username=$USERNAME --password=env:$PASSWORD
