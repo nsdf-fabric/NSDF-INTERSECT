@@ -14,57 +14,24 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+      - uses: dagger/dagger-for-github@8.0.0
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v6
-        with:
-          enable-cache: true
-
-      - name: "Set up Python"
-        uses: actions/setup-python@v5
-        with:
-          python-version-file: "services/nsdf_intersect_dashboard/pyproject.toml"
-
-      - name: Install dependencies
-        working-directory: services/nsdf_intersect_dashboard
-        run: |
-          uv sync --locked --all-extras --dev
-          uv add --group test pytest
-
-      - name: Run tests
-        working-directory: services/nsdf_intersect_dashboard
-        run: uv run pytest
+      - name: Run Dashboard Tests
+        run: dagger call test-dashboard
 
   build:
     runs-on: ubuntu-latest
-    env:
-      DASHBOARD_IMAGE_NAME: intersect-dashboard
-      DASHBOARD_SERVICE_IMAGE_NAME: intersect-service
-      STORAGE_SERVICE_IMAGE_NAME: intersect-storage
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
-      - name: Cache Docker layers
-        uses: actions/cache@v4
-        with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-docker-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-docker-
+      - uses: dagger/dagger-for-github@8.0.0
 
       - name: Build Dashboard Docker image
-        run: |
-          docker build -t ghcr.io/${{ github.repository_owner }}/${{env.DASHBOARD_IMAGE_NAME}}:latest services/nsdf_intersect_dashboard
+        run: dagger call build-dashboard-container
 
       - name: Build Dashboard Service Docker image
-        run: |
-          docker build -t ghcr.io/${{ github.repository_owner }}/${{env.DASHBOARD_SERVICE_IMAGE_NAME}}:latest services/nsdf_intersect_service
+        run: dagger call build-service-container
 
       - name: Build Storage Service Docker image
-        run: |
-          docker build -t ghcr.io/${{ github.repository_owner }}/${{env.STORAGE_SERVICE_IMAGE_NAME}}:latest services/nsdf_intersect_storage
+        run: dagger call build-storage-container
