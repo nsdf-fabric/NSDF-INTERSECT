@@ -32,7 +32,6 @@ services:
       - broker
     environment:
       BOKEH_ALLOW_WS_ORIGIN: "*"
-      INTERSECT_DASHBOARD_CONFIG: "/app/config_dashboard_default.yaml"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:10042/"]
       interval: 10s
@@ -49,8 +48,6 @@ services:
     container_name: dashboard_service
     ports:
       - "10043:10043"
-    environment:
-      INTERSECT_SERVICE_CONFIG: "/app/config_default.yaml"
     depends_on:
       broker:
         condition: service_healthy
@@ -64,8 +61,6 @@ services:
     container_name: storage_service
     ports:
       - "10044:10044"
-    environment:
-      INTERSECT_SERVICE_CONFIG: "/app/config_storage.yaml"
     env_file: ".env"
     volumes:
       - intersect_scientist_cloud_volume:/usr/src/storage_service/scientist_cloud_volume
