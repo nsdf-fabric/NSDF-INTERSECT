@@ -38,6 +38,8 @@ brokerPassword: ""
 intersect:
   proxy-http-server:
     enabled: true
+    image:
+      tag: "9284ad6360fd3a1463ad2a37a23642044b952037"
     service:
       type: ClusterIP
       port: *proxy-serverPort
