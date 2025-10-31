@@ -7,10 +7,10 @@
   # proxy
   proxy:
     systemName: &proxy-systemName "nsdf.cloud.diffraction."
-    log_level: &proxy-loglevel "error" # set to "debug" if you want extremely verbose output, including of the messages themselves
     proxySecretName: &proxy-password "nsdf-intersect-proxy-secret"
     proxySecretKey: &proxy-passwordKey "proxy-password"
     proxyProtocol: &proxy-protocol "amqp" # amqp or mqtt
+    log_level: &proxy-loglevel "debug" # set to "debug" if you want extremely verbose output, including of the messages themselves
 
     server:
       serverUsername: &proxy-serverUsername "proxy_username"
