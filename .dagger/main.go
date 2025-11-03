@@ -60,7 +60,7 @@ func (m *NsdfIntersectCi) BuildStorageContainer(
 }
 
 // Publish Docker image to registry
-func (m *NsdfIntersectCi) PublishImage(ctx context.Context, imageName string,
+func (m *NsdfIntersectCi) PublishImage(ctx context.Context, name string,
 	// +default="latest"
 	tag string,
 	// +default="ttl.sh"
@@ -72,7 +72,7 @@ func (m *NsdfIntersectCi) PublishImage(ctx context.Context, imageName string,
 ) (string, error) {
 
 	container := &dagger.Container{}
-	switch imageName {
+	switch name {
 	case "intersect-dashboard":
 		container = m.BuildDashboardContainer(source.Directory("nsdf_intersect_dashboard"))
 	case "intersect-service":
@@ -83,8 +83,8 @@ func (m *NsdfIntersectCi) PublishImage(ctx context.Context, imageName string,
 
 	if registry != "ttl.sh" {
 		container.WithRegistryAuth(registry, username, password)
-		return container.Publish(ctx, fmt.Sprintf("%s/%s/%s:%s", registry, username, imageName, tag))
+		return container.Publish(ctx, fmt.Sprintf("%s/%s/%s:%s", registry, username, name, tag))
 	} else {
-		return container.Publish(ctx, fmt.Sprintf("%s/%s-%.0f", registry, imageName, math.Floor(rand.Float64()*10000000)))
+		return container.Publish(ctx, fmt.Sprintf("%s/%s-%.0f", registry, name, math.Floor(rand.Float64()*10000000)))
 	}
 }

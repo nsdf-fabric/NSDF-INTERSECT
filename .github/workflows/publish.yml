@@ -27,15 +27,15 @@ jobs:
 
       - name: Publish Dashboard Docker image to ghcr
         run: |
-          dagger call publish-image --registry=ghcr.io --image-name=$DASHBOARD_IMAGE_NAME --tag=uv --username=$USERNAME --password=env:$PASSWORD
-          dagger call publish-image --registry=ghcr.io --image-name=$DASHBOARD_IMAGE_NAME --tag=$SHA_TAG --username=$USERNAME --password=env:$PASSWORD
+          dagger call publish-image --registry=ghcr.io --name=$DASHBOARD_IMAGE_NAME --tag=uv --username=$USERNAME --password=env:PASSWORD
+          dagger call publish-image --registry=ghcr.io --name=$DASHBOARD_IMAGE_NAME --tag=$SHA_TAG --username=$USERNAME --password=env:PASSWORD
 
       - name: Publish Dashboard Service Docker image to ghcr
         run: |
-          dagger call publish-image --registry=ghcr.io --image-name=$DASHBOARD_SERVICE_IMAGE_NAME --tag=uv --username=$USERNAME --password=env:$PASSWORD
-          dagger call publish-image --registry=ghcr.io --image-name=$DASHBOARD_SERVICE_IMAGE_NAME --tag=$SHA_TAG --username=$USERNAME --password=env:$PASSWORD
+          dagger call publish-image --registry=ghcr.io --name=$DASHBOARD_SERVICE_IMAGE_NAME --tag=uv --username=$USERNAME --password=env:PASSWORD
+          dagger call publish-image --registry=ghcr.io --name=$DASHBOARD_SERVICE_IMAGE_NAME --tag=$SHA_TAG --username=$USERNAME --password=env:PASSWORD
 
       - name: Publish Storage Service Docker image to ghcr
         run: |
-          dagger call publish-image --registry=ghcr.io --image-name=$STORAGE_SERVICE_IMAGE_NAME --tag=uv --username=$USERNAME --password=env:$PASSWORD
-          dagger call publish-image --registry=ghcr.io --image-name=$STORAGE_SERVICE_IMAGE_NAME --tag=$SHA_TAG --username=$USERNAME --password=env:$PASSWORD
+          dagger call publish-image --registry=ghcr.io --name=$STORAGE_SERVICE_IMAGE_NAME --tag=uv --username=$USERNAME --password=env:PASSWORD
+          dagger call publish-image --registry=ghcr.io --name=$STORAGE_SERVICE_IMAGE_NAME --tag=$SHA_TAG --username=$USERNAME --password=env:PASSWORD
