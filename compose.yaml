@@ -39,10 +39,10 @@ services:
       start_period: 10s
       timeout: 10s
     volumes:
-      - intersect_bragg_volume:/usr/src/dashboard/bragg_volume/
-      - intersect_transition_volume:/usr/src/dashboard/transition_volume/
-      - intersect_andie_volume:/usr/src/dashboard/andie_volume/
-      - intersect_scientist_cloud_volume:/usr/src/dashboard/scientist_cloud_volume
+      - intersect_bragg_volume:/app/bragg_volume/
+      - intersect_transition_volume:/app/transition_volume/
+      - intersect_andie_volume:/app/andie_volume/
+      - intersect_scientist_cloud_volume:/app/scientist_cloud_volume
   dashboard_service:
     image: "ghcr.io/nsdf-fabric/intersect-service:latest"
     container_name: dashboard_service
@@ -52,10 +52,10 @@ services:
       broker:
         condition: service_healthy
     volumes:
-      - intersect_bragg_volume:/usr/src/dashboard_service/bragg_volume/
-      - intersect_transition_volume:/usr/src/dashboard_service/transition_volume/
-      - intersect_andie_volume:/usr/src/dashboard_service/andie_volume/
-      - intersect_scientist_cloud_volume:/usr/src/dashboard_service/scientist_cloud_volume
+      - intersect_bragg_volume:/app/bragg_volume/
+      - intersect_transition_volume:/app/transition_volume/
+      - intersect_andie_volume:/app/andie_volume/
+      - intersect_scientist_cloud_volume:/app/scientist_cloud_volume
   storage_service:
     image: "ghcr.io/nsdf-fabric/intersect-storage:latest"
     container_name: storage_service
