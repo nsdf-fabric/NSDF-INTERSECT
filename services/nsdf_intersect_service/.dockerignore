@@ -1,4 +1,6 @@
 tests
 __pycache__
-.venv
 .env
+pytest.ini
+Dockerfile
+README.md
