@@ -63,7 +63,7 @@ transition_data = [
 ]
 
 
-CONFIG_CLIENT = os.path.join(os.getcwd(), "config/config_client.yaml")
+CONFIG_CLIENT = os.path.join(os.getcwd(), "clients/config/config_client.yaml")
 DATA_PATH = os.path.join(os.getcwd(), "clients/short_list_of_data.txt")
 
 

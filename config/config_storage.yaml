@@ -1,8 +1,0 @@
-volumes:
-  scientist_cloud_volume: "scientist_cloud_volume"
-scan_period: 30
-sci_cloud:
-  bucket_prefix: "utk"
-  bragg_prefix: "bragg"
-  transition_prefix: "transition"
-  andie_prefix: "andie"
