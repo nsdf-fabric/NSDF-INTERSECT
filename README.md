@@ -15,6 +15,7 @@ This repository hosts the dashboard, dashboard service, storage service, and tes
 
 #### Table of Contents
 
+- [Quick Start](#-quick-start)
 - [Dashboard](#-dashboard)
   - [Building dashboard image](#building-the-dashboard-image)
   - [Running the dashboard container](#running-the-dashboard-container)
@@ -25,14 +26,36 @@ This repository hosts the dashboard, dashboard service, storage service, and tes
   - [Building storage service image](#building-the-storage-service-image)
   - [Running the storage service container](#running-the-storage-service-container)
 - [Testing Clients](#-testing-with-the-client)
-  - [Single file client](#single_clientpy)
-  - [Real-time client](#realtime_clientpy)
-  - [Transition client](#transition_clientpy)
+  - [Real-time client](#realtime_client)
+  - [Single file client](#single_client)
+  - [Transition client](#transition_client)
 - [Running all services](#-running-all-services)
 - [Running with pre-built images](#running-with-pre-built-images)
 - [Running with codespaces](#running-with-codespaces)
 - [Authors](#authors)
 - [Acknowledgements](#acknowledgements)
+
+## ⚡Quick Start
+
+To get started, you can build and launch all the services with the following command:
+
+```bash
+make all
+```
+
+Then, you can visualize the dashboard at `http://localhost:10042`.
+
+Lastly, simulate networking of the service and dashboard with the following command:
+
+```bash
+make realtime
+```
+
+To cleanup, you can run:
+
+```bash
+make down
+```
 
 ## 📈 Dashboard
 
@@ -45,7 +68,7 @@ The dashboard is the visualization component for monitoring the experiment in re
 To build the Docker image for the dashboard, run the following:
 
 ```bash
-docker build -t intersect-dashboard -f Dockerfile.dashboard .
+make dashboard
 ```
 
 #### Running the dashboard container
@@ -59,7 +82,6 @@ docker run --rm -p 10042:10042 intersect-dashboard
 ## 🖥️ Dashboard service
 
 The dashboard service uses [intersect-sdk](https://github.com/INTERSECT-SDK/python-sdk) to enable endpoints that work with message brokers (i.e RabbitMQ).
-The service will include three endpoints to serve the dashboard component: `get_bragg_data`, `get_transition_data`, and `get_next_temperature`.
 
 ### 🐳 Docker
 
@@ -68,7 +90,7 @@ The service will include three endpoints to serve the dashboard component: `get_
 To build the Docker image for the service, run the following:
 
 ```bash
-docker build -t intersect-service -f Dockerfile.dashboard_service .
+make service
 ```
 
 #### Running the dashboard service container
@@ -90,7 +112,7 @@ The storage service interfaces with Scientist Cloud to persist the data that is 
 To build the Docker image for the storage service, run the following:
 
 ```bash
-docker build -t intersect-storage -f Dockerfile.storage_service .
+make storage
 ```
 
 #### Running the storage service container
@@ -103,10 +125,21 @@ docker run --rm -p 10044:10044 intersect-storage
 
 ## 🧪 Testing with the client
 
-To test the networking of the service and the observer on the dashboard, we can use intersect-sdk to create clients that serve the purpose of simulating
-the traffic through the message broker. We have two clients.
+To test the networking of the service and the dashboard, we can use intersect-sdk to create clients that serve the purpose of simulating
+the traffic through the message broker. We have three clients.
 
-### single_client.py
+### Realtime Client
+
+This is a client that implements a message stack with different events (get_bragg_data, get_transition_data, get_next_temperature) and wait times, in order to simulate a real-time stream of events. More information
+on this type of client here [counting example](https://intersect-python-sdk.readthedocs.io/en/latest/examples/counting.html). Use this client to test all the dashboard functionality.
+
+To run this client make sure you have the service running, then you can execute the following:
+
+```bash
+make realtime
+```
+
+### Single Client
 
 This is a simple client that sends only one file.
 
@@ -130,18 +163,7 @@ python clients/single_client.py --transition
 python clients/single_client.py --next-temp --val 30.0
 ```
 
-### realtime_client.py
-
-This is a client that implements a message stack with different events (get_bragg_data, get_transition_data, get_next_temperature) and wait times, in order to simulate a real-time stream of events. More information
-on this type of client here [counting example](https://intersect-python-sdk.readthedocs.io/en/latest/examples/counting.html).
-
-To run this client make sure you have the service running, then you can execute the following:
-
-```bash
-python clients/realtime_client.py
-```
-
-### transition_client.py
+### Transition Client
 
 This is a client that implements a message stack for testing the transition plot. The transition plot receives the type TransitionData which contains a campaign ID, temperature, and a variable size y-list.
 The client can simulate a full campaign for the transition plot via its two arguments `--n` for number of points `--ny` for y-list length as follows.
@@ -244,7 +266,7 @@ make transition
 ## Authors
 
 This project was created by the [NSDF team](https://nationalsciencedatafabric.org/contributors.html), and the [INTERSECT team](https://www.ornl.gov/intersect).
-To reach out email us at info@nationalsciencedatafabric.org and Dr. Michela Taufer mtaufer@utk.edu.
+To reach out email us at [info@nationalsciencedatafabric.org](mailto:info@nationalsciencedatafabric.org) and Dr. Michela Taufer [mtaufer@utk.edu](mtaufer@utk.edu).
 
 ## Acknowledgements
 
@@ -252,4 +274,3 @@ The authors would like to express the gratitude to:
 
 - NSF through the awards 2138811, 2103845, 2334945, 2138296, and 2331152.
 - VisStore/ ScientistCloud [link](https://www.visoar.net/)
-- The Seal Storage Team [link](https://sealstorage.io/)
