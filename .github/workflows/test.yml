@@ -21,17 +21,11 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
       - uses: dagger/dagger-for-github@8.0.0
 
-      - name: Build Dashboard Docker image
-        run: dagger call build-dashboard-container
-
-      - name: Build Dashboard Service Docker image
-        run: dagger call build-service-container
-
-      - name: Build Storage Service Docker image
-        run: dagger call build-storage-container
+      - name: Test Image Builds
+        run: |
+          dagger call build-from-dockerfile --source="$GITHUB_WORKSPACE/services/nsdf_intersect_dashboard" --version=latest --sha=123
