@@ -29,3 +29,4 @@ jobs:
       - name: Test Image Builds
         run: |
           dagger call build-from-dockerfile --source="$GITHUB_WORKSPACE/services/nsdf_intersect_dashboard" --version=latest --sha=123
+          dagger call build-from-dockerfile --source="$GITHUB_WORKSPACE/services/nsdf_intersect_service" --version=latest --sha=123
