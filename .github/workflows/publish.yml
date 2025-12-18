@@ -18,7 +18,8 @@ jobs:
       STORAGE_SERVICE_IMAGE_NAME: intersect-storage
       USERNAME: ${{github.repository_owner}}
       PASSWORD: ${{secrets.GITHUB_TOKEN}}
-      SHA_TAG: ${{github.sha}}
+      IMAGE_TAGS: uv,${{github.sha}},${{github.ref_name}}
+      SHA: ${{github.sha}}
 
     steps:
       - name: Checkout repository
@@ -27,15 +28,12 @@ jobs:
 
       - name: Publish Dashboard Docker image to ghcr
         run: |
-          dagger call publish-image --registry=ghcr.io --name=$DASHBOARD_IMAGE_NAME --tag=uv --username=$USERNAME --password=env:PASSWORD
-          dagger call publish-image --registry=ghcr.io --name=$DASHBOARD_IMAGE_NAME --tag=$SHA_TAG --username=$USERNAME --password=env:PASSWORD
+          dagger call publish-image --registry=ghcr.io --name=$DASHBOARD_IMAGE_NAME --versions=$IMAGE_TAGS --sha=$SHA --username=$USERNAME --password=env:PASSWORD
 
       - name: Publish Dashboard Service Docker image to ghcr
         run: |
-          dagger call publish-image --registry=ghcr.io --name=$DASHBOARD_SERVICE_IMAGE_NAME --tag=uv --username=$USERNAME --password=env:PASSWORD
-          dagger call publish-image --registry=ghcr.io --name=$DASHBOARD_SERVICE_IMAGE_NAME --tag=$SHA_TAG --username=$USERNAME --password=env:PASSWORD
+          dagger call publish-image --registry=ghcr.io --name=$DASHBOARD_SERVICE_IMAGE_NAME --versions=$IMAGE_TAGS --sha=$SHA --username=$USERNAME --password=env:PASSWORD
 
       - name: Publish Storage Service Docker image to ghcr
         run: |
-          dagger call publish-image --registry=ghcr.io --name=$STORAGE_SERVICE_IMAGE_NAME --tag=uv --username=$USERNAME --password=env:PASSWORD
-          dagger call publish-image --registry=ghcr.io --name=$STORAGE_SERVICE_IMAGE_NAME --tag=$SHA_TAG --username=$USERNAME --password=env:PASSWORD
+          dagger call publish-image --registry=ghcr.io --name=$STORAGE_SERVICE_IMAGE_NAME --tag=$IMAGE_TAGS --sha=$SHA --username=$USERNAME --password=env:PASSWORD

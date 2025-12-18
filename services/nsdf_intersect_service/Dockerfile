@@ -31,6 +31,17 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # Runtime stage: only venv
 FROM base AS runtime
 
+ARG GIT_SHA
+ARG VERSION
+
+LABEL org.opencontainers.image.title="nsdf-intersect-service" \
+      org.opencontainers.image.description="NSDF intersect dashboard service" \
+      org.opencontainers.image.source="https://github.com/nsdf-fabric/NSDF-INTERSECT/tree/main/services/nsdf_intersect_service" \
+      org.opencontainers.image.licenses="BSD 3-Clause"
+
+LABEL org.opencontainers.image.version=${VERSION}
+LABEL org.opencontainers.image.revision=${GIT_SHA}
+
 WORKDIR /app
 
 # Create user and group

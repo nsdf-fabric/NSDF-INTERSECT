@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+	"time"
 
 	"dagger/nsdf-intersect-ci/internal/dagger"
 )
@@ -31,60 +32,58 @@ func (m *NsdfIntersectCi) TestDashboard(
 }
 
 // Build container from Dockerfile
-func (m *NsdfIntersectCi) BuildFromDockerfile(source *dagger.Directory) *dagger.Container {
-	return dag.Container().Build(source)
-}
-
-// Builds dashboard container
-func (m *NsdfIntersectCi) BuildDashboardContainer(
-	// +defaultPath="services/nsdf_intersect_dashboard"
-	source *dagger.Directory,
-) *dagger.Container {
-	return m.BuildFromDockerfile(source)
-}
-
-// Builds service container
-func (m *NsdfIntersectCi) BuildServiceContainer(
-	// +defaultPath="services/nsdf_intersect_service"
-	source *dagger.Directory,
-) *dagger.Container {
-	return m.BuildFromDockerfile(source)
-}
-
-// Builds service container
-func (m *NsdfIntersectCi) BuildStorageContainer(
-	// +defaultPath="services/nsdf_intersect_storage"
-	source *dagger.Directory,
-) *dagger.Container {
-	return m.BuildFromDockerfile(source)
+func (m *NsdfIntersectCi) BuildFromDockerfile(source *dagger.Directory, version string, sha string) *dagger.Container {
+	return dag.Container().Build(source, dagger.ContainerBuildOpts{
+		BuildArgs: []dagger.BuildArg{
+			dagger.BuildArg{Name: "GIT_SHA", Value: sha},
+			dagger.BuildArg{Name: "VERSION", Value: version},
+		},
+	}).WithLabel("org.opencontainers.image.created", time.Now().UTC().Format(time.RFC3339))
 }
 
 // Publish Docker image to registry
 func (m *NsdfIntersectCi) PublishImage(ctx context.Context, name string,
-	// +default="latest"
-	tag string,
+	// +optional
+	versions []string,
+	sha string,
 	// +default="ttl.sh"
 	registry string,
 	username string,
 	password *dagger.Secret,
 	// +defaultPath="services"
 	source *dagger.Directory,
-) (string, error) {
+) ([]string, error) {
 
-	container := &dagger.Container{}
-	switch name {
-	case "intersect-dashboard":
-		container = m.BuildDashboardContainer(source.Directory("nsdf_intersect_dashboard"))
-	case "intersect-service":
-		container = m.BuildServiceContainer(source.Directory("nsdf_intersect_service"))
-	case "intersect-storage":
-		container = m.BuildStorageContainer(source.Directory("ndsf_intersect_storage"))
+	if len(versions) == 0 {
+		versions = append(versions, "latest")
 	}
 
-	if registry != "ttl.sh" {
-		container.WithRegistryAuth(registry, username, password)
-		return container.Publish(ctx, fmt.Sprintf("%s/%s/%s:%s", registry, username, name, tag))
-	} else {
-		return container.Publish(ctx, fmt.Sprintf("%s/%s-%.0f", registry, name, math.Floor(rand.Float64()*10000000)))
+	published := make([]string, len(versions))
+
+	for i, version := range versions {
+		container := &dagger.Container{}
+		switch name {
+		case "intersect-dashboard":
+			container = m.BuildFromDockerfile(source.Directory("nsdf_intersect_dashboard"), version, sha)
+		case "intersect-service":
+			container = m.BuildFromDockerfile(source.Directory("nsdf_intersect_service"), version, sha)
+		case "intersect-storage":
+			container = m.BuildFromDockerfile(source.Directory("ndsf_intersect_storage"), version, sha)
+		}
+
+		imageName := fmt.Sprintf("%s/%s/%s:%s", registry, username, name, version)
+		if registry != "ttl.sh" {
+			container = container.WithRegistryAuth(registry, username, password)
+		} else {
+			imageName = fmt.Sprintf("%s/%s-%.0f", registry, name, math.Floor(rand.Float64()*10000000))
+		}
+
+		if _, err := container.Publish(ctx, imageName); err != nil {
+			return nil, err
+		}
+
+		published[i] = imageName
 	}
+
+	return published, nil
 }

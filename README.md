@@ -15,7 +15,7 @@ This repository hosts the dashboard, dashboard service, storage service, and tes
 
 #### Table of Contents
 
-- [Quick Start](#-quick-start)
+- [Quick Start](#quick-start)
 - [Dashboard](#-dashboard)
   - [Building dashboard image](#building-the-dashboard-image)
   - [Running the dashboard container](#running-the-dashboard-container)
