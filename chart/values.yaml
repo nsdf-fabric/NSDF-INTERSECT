@@ -22,6 +22,7 @@ podSecurityContext:
 containerSecurityContext:
   enabled: false
   runAsUser: 1001
+  runAsGroup: 1001
   runAsNonRoot: true
   readOnlyRootFilesystem: false
 
@@ -111,13 +112,13 @@ dashboard:
 
   extraVolumeMounts:
     - name: bragg-volume
-      mountPath: /usr/src/dashboard/bragg_volume
+      mountPath: /app/bragg_volume
     - name: transition-volume
-      mountPath: /usr/src/dashboard/transition_volume
+      mountPath: /app/transition_volume
     - name: andie-volume
-      mountPath: /usr/src/dashboard/andie_volume
+      mountPath: /app/andie_volume
     - name: scientist-cloud-volume
-      mountPath: /usr/src/dashboard/scientist_cloud_volume
+      mountPath: /app/scientist_cloud_volume
 
   # TODO figure out halfway decent probes
 
@@ -254,13 +255,13 @@ dashboardService:
 
   extraVolumeMounts:
     - name: bragg-volume
-      mountPath: /usr/src/dashboard_service/bragg_volume
+      mountPath: /app/bragg_volume
     - name: transition-volume
-      mountPath: /usr/src/dashboard_service/transition_volume
+      mountPath: /app/transition_volume
     - name: andie-volume
-      mountPath: /usr/src/dashboard_service/andie_volume
+      mountPath: /app/andie_volume
     - name: scientist-cloud-volume
-      mountPath: /usr/src/dashboard_service/scientist_cloud_volume
+      mountPath: /app/scientist_cloud_volume
 
 ### Kubernetes role stuff
 

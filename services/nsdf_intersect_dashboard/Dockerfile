@@ -45,20 +45,20 @@ LABEL org.opencontainers.image.revision=${GIT_SHA}
 
 WORKDIR /app
 
-# Create user and group
-RUN addgroup --gid 1001 --system nonroot && \
-    adduser --no-create-home --shell /bin/false \
-    --disabled-password --uid 1001 --system --group nonroot
-
-# Switch to non-root user
-USER nonroot:nonroot
+# # Create user and group
+# RUN addgroup --gid 1001 --system nonroot && \
+#     adduser --no-create-home --shell /bin/false \
+#     --disabled-password --uid 1001 --system --group nonroot
+# 
+# # Switch to non-root user
+# USER nonroot:nonroot
 
 ENV VIRTUAL_ENV=/app/.venv \
     PATH="/app/.venv/bin:$PATH"
 
 ENV BOKEH_ALLOW_WS_ORIGIN="*"
 
-COPY --from=build --chown=nonroot:nonroot /app ./
+COPY --from=build /app ./
 COPY ./src/nsdf_intersect_dashboard/config_dashboard.yaml /config/config_dashboard_default.yaml
 
 EXPOSE 10042
