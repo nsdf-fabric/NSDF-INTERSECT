@@ -21,6 +21,7 @@ jobs:
           mkdir -p ~/.kube
           echo ${{ secrets.LINODE_B64_KUBECONFIG }} | base64 --decode > ~/.kube/config
           echo ${{ secrets.LINODE_B64_SECRET_VALUES }} | base64 --decode > ~/.kube/secret-values.yaml
+          echo ${{ secrets.LINODE_B64_DIAL_VALUES }} | base64 --decode > ~/.kube/dial-values.yaml
           chmod -R g-r ~/.kube/
 
       - name: Install Helm
@@ -30,9 +31,12 @@ jobs:
       - name: Add Helm repo dependencies
         run: |
           helm dependency update deployment/chart
+          helm dependency update deployment/dial
 
       - name: Deploy on Linode
-        run: helm upgrade -n intersect nsdf-intersect deployment/chart --install --force --wait -f ~/.kube/secret-values.yaml
+        run: |
+          helm upgrade -n intersect nsdf-intersect deployment/chart --install --force --wait -f ~/.kube/secret-values.yaml
+          helm upgrade -n dial dial deployment/dial --install --force --wait -f ~/.kube/dial-values.yaml
 
       - name: Cleanup
         run: rm -rf ~/.kube

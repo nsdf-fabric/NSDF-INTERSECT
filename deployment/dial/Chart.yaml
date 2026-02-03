@@ -1,0 +1,10 @@
+apiVersion: v2
+name: dial-intersect-linode
+description: Deployment of Dial for our Linode instance
+type: application
+version: 0.0.1
+dependencies:
+  # Dial service
+  - name: dial
+    repository: https://intersect-dial.github.io/dial/
+    version: 0.1.0
