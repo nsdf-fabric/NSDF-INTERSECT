@@ -10,6 +10,7 @@
     log_level: &proxy-loglevel "error" # set to "debug" if you want extremely verbose output, including of the messages themselves
     proxySecretName: &proxy-password "nsdf-intersect-proxy-secret"
     proxySecretKey: &proxy-passwordKey "proxy-password"
+    proxyProtocol: &proxy-protocol "amqp" # amqp or mqtt
 
     server:
       serverUsername: &proxy-serverUsername "proxy_username"
@@ -42,16 +43,18 @@ intersect:
     # you do not have to set this value, it will be 8080 if you don't.
     containerPort: *proxy-serverPort
     app:
-      username: *proxy-serverUsername
-      topic_prefix: *proxy-systemName
       log_level: *proxy-loglevel
+      topic_prefix: *proxy-systemName
+      username: *proxy-serverUsername
       password:
         isSecret: true
+        hardcoded: ""
         secretName: *proxy-password
         secretKey: *proxy-passwordKey
       broker:
         username: *messageBroker-username
         host: *messageBroker-internalHost
+        protocol: *proxy-protocol
         password:
           isSecret: true
           secretName: *messageBroker-password
@@ -59,6 +62,8 @@ intersect:
 
   intersect-message-broker-1:
     image:
+      repository: bitnamilegacy/rabbitmq
+      tag: 3.13.7-debian-12-r2
       debug: true
     auth:
       username: *messageBroker-username
