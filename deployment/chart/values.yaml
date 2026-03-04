@@ -3,12 +3,13 @@
 ######################
 # anchors are just a useful feature so you don't repeat yourself in the config file
 
-
 .anchors:
   # proxy
   proxy:
     systemName: &proxy-systemName "nsdf.cloud.diffraction."
-    log_level: &proxy-loglevel "debug"  # set to "debug" if you want extremely verbose output, including of the messages themselves
+    log_level: &proxy-loglevel "error" # set to "debug" if you want extremely verbose output, including of the messages themselves
+    proxySecretName: &proxy-password "nsdf-intersect-proxy-secret"
+    proxySecretKey: &proxy-passwordKey "proxy-password"
 
     server:
       serverUsername: &proxy-serverUsername "proxy_username"
@@ -18,7 +19,7 @@
   messageBroker:
     username: &messageBroker-username "controller"
     internalHost: &messageBroker-internalHost "nsdf-intersect-intersect-message-broker-1"
-    # based off of templates/rabbitmq-secret.yaml, this is a hardcoded secret name we can reference across numerous applications
+    # Secret pull from ESO
     brokerSecretName: &messageBroker-password "nsdf-intersect-broker-secret"
     brokerSecretKey: &messageBroker-passwordKey "rabbitmq-password"
     amqpNodePort: &messageBroker-amqpNodePort 30010
@@ -32,9 +33,6 @@
 commonLabels: {}
 commonAnnotations: {}
 
-# provide a real value in the secret file
-brokerPassword: ""
-
 intersect:
   proxy-http-server:
     enabled: true
@@ -47,6 +45,10 @@ intersect:
       username: *proxy-serverUsername
       topic_prefix: *proxy-systemName
       log_level: *proxy-loglevel
+      password:
+        isSecret: true
+        secretName: *proxy-password
+        secretKey: *proxy-passwordKey
       broker:
         username: *messageBroker-username
         host: *messageBroker-internalHost
@@ -56,7 +58,7 @@ intersect:
           secretKey: *messageBroker-passwordKey
 
   intersect-message-broker-1:
-    image: 
+    image:
       debug: true
     auth:
       username: *messageBroker-username
@@ -82,7 +84,7 @@ intersect:
     livenessProbe:
       enabled: false
     readinessProbe:
-      enabled: false  
+      enabled: false
     resources:
       requests:
         memory: "2Gi"
@@ -96,20 +98,23 @@ intersect:
         # ephemeral-storage: "4Gi"
     # need to override extraConfiguration because we need to set a management path prefix
     #extraConfiguration: |-
-      #default_vhost = /
-      #{{- if .Values.resources.limits.storage }}
-      #disk_free_limit.absolute = {{ .Values.resources.limits.storage }}
-      #{{- else }}
-      #disk_free_limit.relative = 0.4
-      #{{- end }}
-      #{{- if .Values.resources.requests.cpu }}
-      #delegate_count = {{ .Values.resources.requests.cpu }}
-      #{{- end }}
-      #mqtt.max_session_expiry_interval_seconds = infinity
-      # set this to the maximum allowed by rabbitmq - https://www.rabbitmq.com/docs/configure#config-items
-      #max_message_size = 536870912
-      #management.path_prefix = /messages
+    #default_vhost = /
+    #{{- if .Values.resources.limits.storage }}
+    #disk_free_limit.absolute = {{ .Values.resources.limits.storage }}
+    #{{- else }}
+    #disk_free_limit.relative = 0.4
+    #{{- end }}
+    #{{- if .Values.resources.requests.cpu }}
+    #delegate_count = {{ .Values.resources.requests.cpu }}
+    #{{- end }}
+    #mqtt.max_session_expiry_interval_seconds = infinity
+    # set this to the maximum allowed by rabbitmq - https://www.rabbitmq.com/docs/configure#config-items
+    #max_message_size = 536870912
+    #management.path_prefix = /messages
 
   intersect-storage-1:
     # we shouldn't need MINIO for this deployment
+    enabled: false
+
+  intersect-authentication-1:
     enabled: false

@@ -2,9 +2,9 @@ apiVersion: v2
 name: intersect-core-linode
 description: Intersect Core for NSDF LKE
 type: application
-version: 0.0.1
+version: 0.0.2
 dependencies:
   # core INTERSECT
   - name: intersect
     repository: https://intersect-sdk.github.io/helm-charts/
-    version: "0.0.5"
+    version: "0.0.7"
