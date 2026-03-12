@@ -12,21 +12,21 @@ metadata:
     nginx.ingress.kubernetes.io/proxy-body-size: "20m"
 spec:
   rules:
-  - host: intersect.nationalsciencedatafabric.org
-    http:
-      paths:
-      - pathType: ImplementationSpecific 
-        path: /proxy(/|$)(.*)
-        backend:
-          service:
-            name: nsdf-intersect-proxy-http-server
-            port:
-              number: 9071
-      # root path needs to be last
-      - pathType: ImplementationSpecific 
-        path: /(|$)(.*)
-        backend:
-          service:
-            name: nsdf-services-nsdf-intersect-dashboard
-            port:
-              number: 10042
+    - host: intersect.nationalsciencedatafabric.org
+      http:
+        paths:
+          - pathType: ImplementationSpecific
+            path: /proxy(/|$)(.*)
+            backend:
+              service:
+                name: intersect-core-proxy-http-server
+                port:
+                  number: 9071
+          # root path needs to be last
+          - pathType: ImplementationSpecific
+            path: /(|$)(.*)
+            backend:
+              service:
+                name: nsdf-services-nsdf-intersect-dashboard
+                port:
+                  number: 10042

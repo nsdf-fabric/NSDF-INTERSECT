@@ -2,7 +2,7 @@ apiVersion: v2
 name: intersect-core-linode
 description: Intersect Core for NSDF LKE
 type: application
-version: 0.0.2
+version: 0.0.3
 dependencies:
   # core INTERSECT
   - name: intersect
