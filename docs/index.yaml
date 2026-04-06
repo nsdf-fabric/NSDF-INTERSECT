@@ -2,7 +2,20 @@ apiVersion: v1
 entries:
   intersect-core-linode:
   - apiVersion: v2
-    created: "2026-04-06T14:43:38.976011-04:00"
+    created: "2026-04-06T14:54:08.288872-04:00"
+    dependencies:
+    - name: intersect
+      repository: https://intersect-sdk.github.io/helm-charts/
+      version: 0.0.7
+    description: Intersect Core for NSDF LKE
+    digest: 7f86ac552b5a9372004433c5b423932eea2ccb086d46fa9799d2e8995882b14c
+    name: intersect-core-linode
+    type: application
+    urls:
+    - https://nsdf-fabric.github.io/NSDF-INTERSECT/intersect-core-linode-0.0.5.tgz
+    version: 0.0.5
+  - apiVersion: v2
+    created: "2026-04-06T14:54:08.271597-04:00"
     dependencies:
     - name: intersect
       repository: https://intersect-sdk.github.io/helm-charts/
@@ -15,7 +28,7 @@ entries:
     - https://nsdf-fabric.github.io/NSDF-INTERSECT/intersect-core-linode-0.0.4.tgz
     version: 0.0.4
   - apiVersion: v2
-    created: "2026-04-06T14:43:38.956424-04:00"
+    created: "2026-04-06T14:54:08.258628-04:00"
     dependencies:
     - name: intersect
       repository: https://intersect-sdk.github.io/helm-charts/
@@ -28,7 +41,7 @@ entries:
     - https://nsdf-fabric.github.io/NSDF-INTERSECT/intersect-core-linode-0.0.3.tgz
     version: 0.0.3
   - apiVersion: v2
-    created: "2026-04-06T14:43:38.937261-04:00"
+    created: "2026-04-06T14:54:08.245968-04:00"
     dependencies:
     - name: intersect
       repository: https://intersect-sdk.github.io/helm-charts/
@@ -41,7 +54,7 @@ entries:
     - https://nsdf-fabric.github.io/NSDF-INTERSECT/intersect-core-linode-0.0.2.tgz
     version: 0.0.2
   - apiVersion: v2
-    created: "2026-04-06T14:43:38.918539-04:00"
+    created: "2026-04-06T14:54:08.230035-04:00"
     dependencies:
     - name: intersect
       repository: https://intersect-sdk.github.io/helm-charts/
@@ -55,7 +68,7 @@ entries:
     version: 0.0.1
   nsdf-intersect:
   - apiVersion: v2
-    created: "2026-04-06T14:43:38.986107-04:00"
+    created: "2026-04-06T14:54:08.290678-04:00"
     dependencies:
     - name: common
       repository: https://charts.bitnami.com/bitnami
@@ -66,4 +79,4 @@ entries:
     urls:
     - https://nsdf-fabric.github.io/NSDF-INTERSECT/nsdf-intersect-0.1.0.tgz
     version: 0.1.0
-generated: "2026-04-06T14:43:38.901991-04:00"
+generated: "2026-04-06T14:54:08.219249-04:00"
