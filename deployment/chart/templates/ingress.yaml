@@ -22,6 +22,15 @@ spec:
                 name: intersect-core-proxy-http-server
                 port:
                   number: 9071
+
+          - pathType: ImplementationSpecific
+            path: /broker(/|$)(.*)
+            backend:
+              service:
+                name: intersect-message-broker-1
+                port:
+                  number: 15672
+
           # root path needs to be last
           - pathType: ImplementationSpecific
             path: /(|$)(.*)

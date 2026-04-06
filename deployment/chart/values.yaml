@@ -23,13 +23,13 @@
     # Secret pull from ESO
     brokerSecretName: &messageBroker-password "nsdf-intersect-broker-secret"
     brokerSecretKey: &messageBroker-passwordKey "rabbitmq-password"
-    amqpNodePort: &messageBroker-amqpNodePort 30010
-    mqttNodePort: &messageBroker-mqttNodePort 30011
-    #stompNodePort: &messageBroker-stompNodePort 30012
-    managerNodePort: &messageBroker-managerNodePort 30013
-    metricsNodePort: &messageBroker-metricsNodePort 30014
-    distNodePort: &messageBroker-distNodePort 30015
-    epmdNodePort: &messageBroker-epmdNodePort 30016
+    # amqpNodePort: &messageBroker-amqpNodePort 30010
+    # mqttNodePort: &messageBroker-mqttNodePort 30011
+    # stompNodePort: &messageBroker-stompNodePort 30012
+    # managerNodePort: &messageBroker-managerNodePort 30013
+    # metricsNodePort: &messageBroker-metricsNodePort 30014
+    # distNodePort: &messageBroker-distNodePort 30015
+    # epmdNodePort: &messageBroker-epmdNodePort 30016
 
 commonLabels: {}
 commonAnnotations: {}
@@ -69,23 +69,23 @@ intersect:
       username: *messageBroker-username
       existingPasswordSecret: *messageBroker-password
     # this example will use a NodePort service
-    service:
-      type: NodePort
-      nodePorts:
-        amqp: *messageBroker-amqpNodePort
-        dist: *messageBroker-distNodePort
-        manager: *messageBroker-managerNodePort
-        epmd: *messageBroker-epmdNodePort
-        metrics: *messageBroker-metricsNodePort
-      extraPorts:
-        - name: mqtt
-          port: 1883
-          targetPort: 1883
-          nodePort: *messageBroker-mqttNodePort
-        #- name: stomp
-        #  port: 61613
-        #  targetPort: 61613
-        #  nodePort: *messageBroker-stompNodePort
+    # service:
+    #   type: NodePort
+    #   nodePorts:
+    #     amqp: *messageBroker-amqpNodePort
+    #     dist: *messageBroker-distNodePort
+    #     manager: *messageBroker-managerNodePort
+    #     epmd: *messageBroker-epmdNodePort
+    #     metrics: *messageBroker-metricsNodePort
+    #   extraPorts:
+    #     - name: mqtt
+    #       port: 1883
+    #       targetPort: 1883
+    #       nodePort: *messageBroker-mqttNodePort
+    #- name: stomp
+    #  port: 61613
+    #  targetPort: 61613
+    #  nodePort: *messageBroker-stompNodePort
     livenessProbe:
       enabled: false
     readinessProbe:
