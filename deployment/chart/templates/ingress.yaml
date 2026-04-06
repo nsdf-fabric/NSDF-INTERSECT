@@ -27,7 +27,7 @@ spec:
             path: /broker(/|$)(.*)
             backend:
               service:
-                name: intersect-message-broker-1
+                name: intersect-core-intersect-message-broker-1
                 port:
                   number: 15672
 
