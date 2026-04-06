@@ -19,7 +19,7 @@
   # message plane
   messageBroker:
     username: &messageBroker-username "controller"
-    internalHost: &messageBroker-internalHost "nsdf-intersect-intersect-message-broker-1"
+    internalHost: &messageBroker-internalHost "intersect-core-intersect-message-broker-1"
     # Secret pull from ESO
     brokerSecretName: &messageBroker-password "nsdf-intersect-broker-secret"
     brokerSecretKey: &messageBroker-passwordKey "rabbitmq-password"
