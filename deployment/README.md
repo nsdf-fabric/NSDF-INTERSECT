@@ -13,7 +13,6 @@ These are stored as Github secrets.
 - `LINODE_B64_KUBECONFIG` - base64-encoded Kubeconfig for the Kubernetes cluster
 - `LINODE_B64_SECRET_VALUES` - base64-encoded secret values we apply additionally to the deployment
 
-
 ### Secrets values yaml file
 
 To update `LINODE_B64_SECRET_VALUES`, use `examples.secrets-values.yaml` as a template for new yaml (say `new-secrets.yaml`) and...
