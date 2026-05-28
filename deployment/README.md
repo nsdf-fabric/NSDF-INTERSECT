@@ -20,6 +20,7 @@ To update `LINODE_B64_SECRET_VALUES` or `LINODE_B64_DIAL_VALUES`, use `examples.
 
 1. Update the passwords secrets where `CHANGEME` occurs
    - To create random, you can use: `python -c "import secrets; print(secrets.token_urlsafe())"`
+   - The campaign orchestrator `apiKey` must be **at least 32 characters**
 
 2. Base64 encode the yaml file: `base64 new-secret.yaml`
 3. Update the GitHub Actions `LINODE_B64_SECRET_VALUES`/`LINODE_B64_DIAL_VALUES` with this encoded string from step (2):
