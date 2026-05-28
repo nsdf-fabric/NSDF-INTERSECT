@@ -2,13 +2,9 @@ apiVersion: v2
 name: intersect-core-linode
 description: Intersect Core for NSDF LKE
 type: application
-version: 0.0.7
+version: 0.0.8
 dependencies:
   # core INTERSECT
   - name: intersect
     repository: https://intersect-sdk.github.io/helm-charts/
-<<<<<<< HEAD
-    version: "0.0.7"
-=======
     version: "0.0.8"
->>>>>>> 298b204 (Bumps to 0.0.8 + adds campaign orchestrator sub-chart info)
