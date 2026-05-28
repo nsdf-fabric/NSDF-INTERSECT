@@ -7,4 +7,8 @@ dependencies:
   # core INTERSECT
   - name: intersect
     repository: https://intersect-sdk.github.io/helm-charts/
+<<<<<<< HEAD
     version: "0.0.7"
+=======
+    version: "0.0.8"
+>>>>>>> 298b204 (Bumps to 0.0.8 + adds campaign orchestrator sub-chart info)

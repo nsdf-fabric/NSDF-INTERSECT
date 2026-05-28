@@ -119,6 +119,24 @@ intersect:
     #max_message_size = 536870912
     #management.path_prefix = /messages
 
+  campaign-orchestrator:
+    enabled: true
+    app:
+      # API key must be at least 32 characters; override with hardcoded value in the secrets file
+      apiKey:
+        isSecret: false
+        hardcoded: ""
+    broker:
+      host: *messageBroker-internalHost
+      protocol: "amqp0.9.1"
+      username: *messageBroker-username
+      password:
+        isSecret: true
+        secretName: *messageBroker-password
+        secretKey: *messageBroker-passwordKey
+    campaignRepository:
+      backend: memory
+
   intersect-storage-1:
     # we shouldn't need MINIO for this deployment
     enabled: false
