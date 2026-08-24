@@ -1,15 +1,12 @@
-name: Test
+name: test
 
 on:
-  push:
-    branches:
-      - ci/add-uv
   pull_request:
     branches:
       - main
 
 jobs:
-  test-dashboard:
+  test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
