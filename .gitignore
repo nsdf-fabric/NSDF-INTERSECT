@@ -5,6 +5,7 @@ __pycache__
 Chart.lock
 .env.*
 .env
+*.venv
 
 # Do not store volume mounts
 bragg_data

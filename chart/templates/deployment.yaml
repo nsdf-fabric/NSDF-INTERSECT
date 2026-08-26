@@ -144,7 +144,7 @@ spec:
           {{- end }}
           env:
             - name: INTERSECT_SERVICE_CONFIG
-              value: {{ .Values.intersectConfig.filename | default "/app/config.yaml" | quote }}
+              value: {{ .Values.intersectConfig.filename | default "/config/config.yaml" | quote }}
             {{- if .Values.dashboardService.extraEnvVars }}
             {{- include "common.tplvalues.render" (dict "value" .Values.dashboardService.extraEnvVars "context" $) | nindent 12 }}
             {{- end }}
@@ -176,7 +176,7 @@ spec:
           {{- end }}
           volumeMounts:
           - name: intersect-config
-            mountPath: /app/
+            mountPath: /config/
           - name: shared-volume
             mountPath: {{ .Values.volumeMount.dashboardServicePath | quote }}
           {{- if .Values.dashboardService.extraVolumeMounts }}

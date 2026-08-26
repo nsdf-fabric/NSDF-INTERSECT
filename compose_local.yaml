@@ -24,7 +24,7 @@ services:
       timeout: 10s
 
   dashboard:
-    image: "intersect-dashboard:latest"
+    image: "intersect-dashboard:test"
     container_name: dashboard
     ports:
       - "10042:10042"
@@ -32,7 +32,6 @@ services:
       - broker
     environment:
       BOKEH_ALLOW_WS_ORIGIN: "*"
-      INTERSECT_DASHBOARD_CONFIG: "/app/config_dashboard_default.yaml"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:10042/"]
       interval: 10s
@@ -40,12 +39,13 @@ services:
       start_period: 10s
       timeout: 10s
     volumes:
-      - intersect_bragg_volume:/usr/src/dashboard/bragg_volume/
-      - intersect_transition_volume:/usr/src/dashboard/transition_volume/
-      - intersect_andie_volume:/usr/src/dashboard/andie_volume/
-      - intersect_scientist_cloud_volume:/usr/src/dashboard/scientist_cloud_volume
+      - intersect_bragg_volume:/app/bragg_volume/
+      - intersect_transition_volume:/app/transition_volume/
+      - intersect_andie_volume:/app/andie_volume/
+      - intersect_scientist_cloud_volume:/app/scientist_cloud_volume
+
   dashboard_service:
-    image: "intersect-service:latest"
+    image: "intersect-service:test"
     container_name: dashboard_service
     ports:
       - "10043:10043"
@@ -55,10 +55,10 @@ services:
       broker:
         condition: service_healthy
     volumes:
-      - intersect_bragg_volume:/usr/src/dashboard_service/bragg_volume/
-      - intersect_transition_volume:/usr/src/dashboard_service/transition_volume/
-      - intersect_andie_volume:/usr/src/dashboard_service/andie_volume/
-      - intersect_scientist_cloud_volume:/usr/src/dashboard_service/scientist_cloud_volume
+      - intersect_bragg_volume:/app/bragg_volume/
+      - intersect_transition_volume:/app/transition_volume/
+      - intersect_andie_volume:/app/andie_volume/
+      - intersect_scientist_cloud_volume:/app/scientist_cloud_volume
 volumes:
   intersect_bragg_volume:
   intersect_transition_volume:
