@@ -1,0 +1,5 @@
+delays:
+  file_polling_delay: 1
+  time_update_delay: 0.1
+volumes:
+  scientist_cloud_volume: "/scientist_cloud_volume"

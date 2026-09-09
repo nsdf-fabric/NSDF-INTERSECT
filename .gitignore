@@ -1,11 +1,13 @@
 .DS_STORE
 __pycache__
 .pytest_cache
+.python-version
 *.tgz
 Chart.lock
+uv.lock
+pyproject.toml
 .env.*
 .env
-*.venv
 
 # Do not store volume mounts
 bragg_data

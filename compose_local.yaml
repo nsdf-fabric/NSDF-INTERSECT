@@ -44,6 +44,27 @@ services:
       - intersect_andie_volume:/app/andie_volume/
       - intersect_scientist_cloud_volume:/app/scientist_cloud_volume
 
+  replay_dashboard:
+    image: "intersect-replay-dashboard:test"
+    container_name: replay_dashboard
+    ports:
+      - "10041:10041"
+    depends_on:
+      - broker
+    environment:
+      BOKEH_ALLOW_WS_ORIGIN: "*"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:10041/"]
+      interval: 10s
+      retries: 5
+      start_period: 10s
+      timeout: 10s
+    volumes:
+      - intersect_bragg_volume:/app/bragg_volume/
+      - intersect_transition_volume:/app/transition_volume/
+      - intersect_andie_volume:/app/andie_volume/
+      - intersect_scientist_cloud_volume:/app/scientist_cloud_volume
+
   dashboard_service:
     image: "intersect-service:test"
     container_name: dashboard_service
