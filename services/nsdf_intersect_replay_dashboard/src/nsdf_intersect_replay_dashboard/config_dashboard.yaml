@@ -3,3 +3,9 @@ delays:
   time_update_delay: 0.1
 volumes:
   scientist_cloud_volume: "/scientist_cloud_volume"
+  test_data_volume: "/test_data_volume"
+scientist_cloud:
+  bucket: scientistcloud
+  path: rec/ornl/intersect/
+data:
+  use_test_data: false

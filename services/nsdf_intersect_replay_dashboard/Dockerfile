@@ -9,7 +9,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1
 
-
 # Build stage: dev & build dependencies
 FROM base AS build
 
@@ -60,7 +59,7 @@ ENV BOKEH_ALLOW_WS_ORIGIN="*"
 
 COPY --from=build /app ./
 COPY ./src/nsdf_intersect_replay_dashboard/scientist_cloud_volume/ /scientist_cloud_volume
-COPY ./src/nsdf_intersect_replay_dashboard/config_dashboard.yaml /config/config_dashboard_default.yaml
+COPY ./src/nsdf_intersect_replay_dashboard/test_data_volume/ /test_data_volume
 
 EXPOSE 10042
 

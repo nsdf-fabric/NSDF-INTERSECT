@@ -6,6 +6,7 @@ Description: The UI/visualization component for monitoring experiments.
 """
 
 import os
+import shutil
 import logging
 from typing import List, DefaultDict
 from collections import defaultdict
@@ -16,8 +17,11 @@ from datetime import datetime, timezone
 import numpy as np
 import yaml
 from gsa_loader import load_gsa_file
-
-
+import boto3
+from dotenv import load_dotenv
+from botocore.client import Config
+from concurrent import futures
+from concurrent.futures import ProcessPoolExecutor
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -498,19 +502,99 @@ class TransitionAppState:
             self.play_pause_button.name = "▶️"
             self.play_pause_button.button_type = "success"
 
+def get_resource():
+    session = boto3.Session(aws_access_key_id = os.getenv("AWS_ACCESS_KEY_ID"),
+                                    aws_secret_access_key = os.getenv("AWS_SECRET_ACCESS_KEY"),
+                                    region_name=os.getenv("AWS_REGION_NAME"))
+    s3 = session.resource("s3",
+                                endpoint_url='https://us-east-1.gw.future-tech-holdings.com',
+                                config=Config(signature_version="s3v4"))
+    return s3
+
+def download_file(bucket_name: str, obj_name: str, file_path: str):
+    s3 = get_resource()
+    bucket = s3.Bucket(bucket_name)
+    bucket.download_file(obj_name, file_path)
+    return "Success"
+
+def load_data_from_cloud_parallel(target_dir: str, bucket_name: str, cloud_dir: str):
+    with ProcessPoolExecutor() as executor:
+        if cloud_dir[-1] != "/":
+            cloud_dir += "/"
+
+        future_to_key = {}
+
+        s3 = get_resource()
+        bucket = s3.Bucket(bucket_name)
+
+        bragg_files = bucket.objects.filter(Prefix = cloud_dir+"bragg/")
+        transition_files = bucket.objects.filter(Prefix = cloud_dir+"transition/")
+
+        future = executor.submit(download_file, bucket_name, cloud_dir+"nexttemp/andie.txt", os.path.join(target_dir, "andie.txt"))
+        future_to_key[future] = cloud_dir+"nexttemp/andie.txt"
+
+        for file_summary in bragg_files:
+            object_name = file_summary.key
+            file_name = object_name.split("/")[-1]
+            future = executor.submit(download_file, bucket_name, object_name, os.path.join(target_dir, file_name))
+            future_to_key[future] = object_name
+
+        for file_summary in transition_files:
+            object_name = file_summary.key
+            file_name = object_name.split("/")[-1]
+            future = executor.submit(download_file, bucket_name, object_name, os.path.join(target_dir, file_name))
+            future_to_key[future] = object_name
+
+        for future in futures.as_completed(future_to_key):
+            key = future_to_key[future]
+            exception = future.exception()
+
+            if not exception:
+                yield key, future.result()
+            else:
+                yield key, exception
+
 def App() -> MaterialTemplate:
     pn.extension("plotly")
     config = defaultdict()
+    load_dotenv()
 
-    config_path = os.getenv("INTERSECT_REPLAY_DASHBOARD_CONFIG", "/config/config_dashboard_default.yaml")
+    config_path = os.getenv("INTERSECT_REPLAY_DASHBOARD_CONFIG", "/app/config/config_dashboard_default.yaml")
     try:
         with open(config_path) as f:
             config = yaml.safe_load(f)
     except Exception as e:
         logger.error(f"could not initialize replay dashboard, configuration path does not exists: {e}")
-        raise FileNotFoundError(f"could to initialize replay dashboard, configuration path does not exists {e}")
+        raise FileNotFoundError(f"could to initialize replay dashboard, configuration path does not exists: {e}")
 
     logger.info("initialized replay dashboard configuration")
+
+    data_folder = config['volumes']['scientist_cloud_volume']
+
+    if not os.path.isdir(data_folder):
+        logger.error(f"could to initialize replay dashboard, data volume path {data_folder} does not exists: {e}")
+        raise FileNotFoundError(f"could to initialize replay dashboard, data volume path {data_folder} does not exists: {e}")
+
+    for file in os.listdir(data_folder):
+        os.remove(os.path.join(data_folder, file))
+
+    if config["data"]["use_test_data"]:
+        test_folder = config['volumes']['test_data_volume']
+        if not os.path.isdir(test_folder):
+            logger.error(f"could to initialize replay dashboard, test data volume path {test_folder} does not exists: {e}")
+            raise FileNotFoundError(f"could to initialize replay dashboard, test data volume path {test_folder} does not exists: {e}")
+
+        for test_file in os.listdir(test_folder):
+            shutil.copy(os.path.join(test_folder, test_file), data_folder)
+    else:
+        try:
+            for key, result in load_data_from_cloud_parallel(data_folder,
+                                config["scientist_cloud"]["bucket"],
+                                config["scientist_cloud"]["path"]):
+                logger.error(f"download {key}: {result}")
+        except Exception as e:
+            logger.error(f"could not initialize replay dashboard, failed to retrieve scientist cloud data: {e}")
+            raise FileNotFoundError(f"could not initialize replay dashboard, failed to retrieve scientist cloud data: {e}")
 
     bragg_state = BraggAppState(config)
     transition_state = TransitionAppState(config)
@@ -597,12 +681,15 @@ def App() -> MaterialTemplate:
     pn.bind(transition_state.jump_to_point, transition_state.select_point, watch=True)
     pn.bind(lambda _: transition_state.toggle_play_pause(), transition_state.play_pause_button, watch=True)
 
+    page.serveable()
+
+    
+
     return page
 
 
 if __name__.startswith("bokeh"):
     try:
         app = App()
-        app.servable()
     except Exception as e:
         logger.error(f"dashboard could not be initialized {e}")

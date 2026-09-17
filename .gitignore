@@ -6,7 +6,6 @@ __pycache__
 Chart.lock
 uv.lock
 pyproject.toml
-.env.*
 .env
 
 # Do not store volume mounts

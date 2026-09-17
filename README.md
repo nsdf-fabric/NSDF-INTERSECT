@@ -98,7 +98,13 @@ make replay
 To run the Docker container for the replay dashboard, execute the following:
 
 ```bash
-docker run --rm -p 10041:10041 intersect-replay-dashboard
+docker compose -f /services/nsdf_intersect_replay_dashboard/compose.yaml up -d
+```
+
+To kill the dashboard process, run
+
+```bash
+docker compose -f /services/nsdf_intersect_replay_dashboard/compose.yaml down
 ```
 
 ## 🖥️ Dashboard service
