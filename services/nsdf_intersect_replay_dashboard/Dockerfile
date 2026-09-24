@@ -58,8 +58,6 @@ ENV VIRTUAL_ENV=/app/.venv \
 ENV BOKEH_ALLOW_WS_ORIGIN="*"
 
 COPY --from=build /app ./
-COPY ./src/nsdf_intersect_replay_dashboard/scientist_cloud_volume/ /scientist_cloud_volume
-COPY ./src/nsdf_intersect_replay_dashboard/test_data_volume/ /test_data_volume
 
 EXPOSE 10042
 

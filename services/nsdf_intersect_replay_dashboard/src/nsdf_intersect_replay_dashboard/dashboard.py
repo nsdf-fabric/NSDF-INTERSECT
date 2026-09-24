@@ -22,6 +22,8 @@ from dotenv import load_dotenv
 from botocore.client import Config
 from concurrent import futures
 from concurrent.futures import ProcessPoolExecutor
+import uuid
+import hashlib
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -30,11 +32,79 @@ logging.basicConfig(
     level=logging.INFO
 )
 
+class FileProvider:
+    def __init__(self, config, resource):
+        self.config = config
+        self.s3 = resource
+        self.bucket = resource.Bucket(config["scientist_cloud"]["bucket"])
+        self.output_folder = config['volumes']['scientist_cloud_volume']
+        self.path_prefix = self.config["scientist_cloud"]["path"]
+        self.downloaded_files = []
+
+        os.makedirs(self.output_folder, exist_ok=True)
+
+        if self.path_prefix[-1] != "/":
+            self.path_prefix += "/"
+
+        self.modal = pn.Modal(pn.pane.Markdown("<h1>Loading data...</h1>"),
+                name = "Loading Files",
+                show_close_button = False,
+                background_close = False,
+                open = False)
+    
+    def poll_bragg_files(self):
+        file_summaries = self.bucket.objects.filter(Prefix = self.path_prefix + "bragg/")
+        return [summary.key.split("/")[-1] for summary in file_summaries]
+
+    def poll_transition_files(self):
+        file_summaries = self.bucket.objects.filter(Prefix = self.path_prefix + "transition/")
+        return [summary.key.split("/")[-1] for summary in file_summaries]
+
+    def load_andie_file(self) -> str:
+        output_path = os.path.join(self.output_folder, "andie.txt")
+        
+        if os.path.exists(output_path):
+            return output_path
+
+        self.bucket.download_file(self.path_prefix + "nexttemp/" + self.config["scientist_cloud"]["andie_name"], output_path)
+        self.downloaded_files.append(output_path)
+
+        return output_path
+
+    def load_bragg_file(self, file_name: str) -> str:
+        output_path = os.path.join(self.output_folder, file_name)
+
+        if os.path.exists(output_path):
+            return output_path
+
+        self.modal.show()
+
+        self.bucket.download_file(self.path_prefix + "bragg/" + file_name, output_path)
+        self.downloaded_files.append(output_path)
+
+        self.modal.hide()
+
+        return output_path
+
+    def load_transition_file(self, file_name: str) -> str:
+        output_path = os.path.join(self.output_folder, file_name)
+
+        if os.path.exists(output_path):
+            return output_path
+
+        self.modal.show()
+
+        self.bucket.download_file(self.path_prefix + "transition/" + file_name, output_path)
+        self.downloaded_files.append(output_path)
+
+        self.modal.hide()
+
+        return output_path
 
 class BraggAppState:
-    def __init__(self, config: dict):
-        # config
+    def __init__(self, config: dict, file_provider: FileProvider):
         self.config = config
+        self.file_provider = file_provider
         self.files = defaultdict()
         self.bank_options = defaultdict()
 
@@ -81,9 +151,9 @@ class BraggAppState:
         self.poll_files()
 
     def _load_files(self) -> DefaultDict[str, str]:
-        """load files as timestamp/filename pair from the scientist cloud volume"""
+        """load files as timestamp/filename pair from the scientist cloud"""
         result_files = defaultdict()
-        files = os.listdir(self.config['volumes']['scientist_cloud_volume'])
+        files = self.file_provider.poll_bragg_files()
         if files:
             for file in files:
                 if file.endswith(".gsa"):
@@ -97,29 +167,27 @@ class BraggAppState:
 
     def load_file(self, filename: str):
         """load a bragg file and update the plot"""
-        file_path = os.path.join(self.config['volumes']['scientist_cloud_volume'], filename)
-        if os.path.exists(file_path):
-            self.bragg_data_by_bank = defaultdict()
-            self.bank_options = defaultdict()
+        file_path = self.file_provider.load_bragg_file(filename)
 
-            for bank_id, arr in load_gsa_file(file_path).items():
-                self.bank_options["Bank " + str(bank_id)] = bank_id
-                self.bragg_data_by_bank[bank_id] = go.Scatter(
-                    x=arr[0],
-                    y=arr[1],
-                    name=f"Bank {bank_id}",
-                    line=dict(width=2),
-                )
+        self.bragg_data_by_bank = defaultdict()
+        self.bank_options = defaultdict()
 
-            self.bank_options["All Banks"] = -1
-            self.select_bank.options = self.bank_options
-            self.select_bank.value = -1
+        for bank_id, arr in load_gsa_file(file_path).items():
+            self.bank_options["Bank " + str(bank_id)] = bank_id
+            self.bragg_data_by_bank[bank_id] = go.Scatter(
+                x=arr[0],
+                y=arr[1],
+                name=f"Bank {bank_id}",
+                line=dict(width=2),
+            )
 
-            self.display_plot(-1)
+        self.bank_options["All Banks"] = -1
+        self.select_bank.options = self.bank_options
+        self.select_bank.value = -1
 
-            logger.info(f"loaded bragg file: {filename}")
-        else:
-            logger.error(f"bragg file does not exist: {filename}")
+        self.display_plot(-1)
+
+        logger.info(f"loaded bragg file: {filename}")
 
     def display_plot(self, bank_id: int):
         if type(bank_id) != int:
@@ -139,9 +207,9 @@ class BraggAppState:
         self.select_file.options = self.files
 
 class TransitionAppState:
-    def __init__(self, config: dict):
-        # config
+    def __init__(self, config: dict, file_provider: FileProvider):
         self.config = config
+        self.file_provider = file_provider
         self.files = []
         self.point_options = []
         self.file_data = defaultdict()
@@ -173,7 +241,7 @@ class TransitionAppState:
             case_sensitive=False,
             search_strategy="includes",
             placeholder="Select a Campaign ID to View",
-            value=0,
+            value="",
             min_characters=0
         )
 
@@ -207,45 +275,55 @@ class TransitionAppState:
 
         self.next_temperature_md = pn.pane.Markdown("<h2>Next Temperature: --</h2>")
 
+        self.load_andie()
+        self.poll_files()
         self.render(force=True)
 
     def _load_files(self) -> DefaultDict[str, str]:
         """load files as campaign id list from the scientist cloud volume"""
         result_files = []
-        files = os.listdir(self.config['volumes']['scientist_cloud_volume'])
+        files = self.file_provider.poll_transition_files()
         if files:
             for file in files:
                 if file.endswith("_transition.txt"):
                     campaign_id = file.split("_")[0]
-                    result_files.append(campaign_id)
 
-        return result_files
+                    if campaign_id in self.andie_data:
+                        result_files.append(campaign_id)
 
-    def load_file(self, campaign_id: str):
+        result_files.sort(key=lambda file: self.andie_data[file][0][1])
+
+        return [result_files[i]+" (Campaign " + str(i + 1) + ")" for i in range(len(result_files))]
+
+    def load_file(self, selection_name: str):
         """load a transition file"""
+        if selection_name == "":
+            self.render(force=True)
+            return
+
+        campaign_id = selection_name.split(" ")[0]
+
         filename = f"{campaign_id}_transition.txt"
         self.file_data = []
         self.point_options = []
 
-        file_path = os.path.join(self.config['volumes']['scientist_cloud_volume'], filename)
-        if os.path.exists(file_path):
-            self.bragg_data_by_bank = defaultdict()
-            self.bank_options = defaultdict()
-            self.current_campaign_id = campaign_id
+        file_path = self.file_provider.load_transition_file(filename)
+        
+        self.bragg_data_by_bank = defaultdict()
+        self.bank_options = defaultdict()
+        self.current_campaign_id = campaign_id
 
-            with open(file_path, "r") as file:
-                for line in file:
-                    parts = line.strip().split(",") # point_id, temperature, d-spacings...
-                    point_id = parts[0]
-                    self.file_data.append(parts) 
-                    self.point_options.append(point_id)
+        with open(file_path, "r") as file:
+            for line in file:
+                parts = line.strip().split(",") # point_id, temperature, d-spacings...
+                point_id = parts[0]
+                self.file_data.append(parts) 
+                self.point_options.append(point_id)
 
-            self.select_point.options = self.point_options
-            self.t = 0
+        self.select_point.options = self.point_options
+        self.t = 0
 
-            logger.info(f"loaded transition file: {filename}")
-        elif campaign_id != "":
-            logger.error(f"transition file does not exist: {filename}")
+        logger.info(f"loaded transition file: {filename}")
 
         self.render(force=True)
 
@@ -253,30 +331,26 @@ class TransitionAppState:
         """load the andie file for all transition files"""
         self.andie_data = defaultdict()
 
-        file_path = os.path.join(self.config['volumes']['scientist_cloud_volume'], "andie.txt")
-        if os.path.exists(file_path):
-            with open(file_path, "r") as file:
-                for line in file:
-                    parts = line.strip().split(",")
-                    campaign_id = parts[0]
-                    if not (campaign_id in self.andie_data):
-                        self.andie_data[campaign_id] = []
+        file_path = self.file_provider.load_andie_file()
 
-                    self.andie_data[campaign_id].append([parts[1], parts[2], parts[3]]) # reading_id, timestamp, temperature
+        with open(file_path, "r") as file:
+            for line in file:
+                parts = line.strip().split(",")
+                campaign_id = parts[0]
+                if not (campaign_id in self.andie_data):
+                    self.andie_data[campaign_id] = []
 
-            for points in self.andie_data.values():
-                points.sort(key=lambda entry: entry[1]) # sort by timestamp
+                self.andie_data[campaign_id].append([parts[1], parts[2], parts[3]]) # reading_id, timestamp, temperature
 
-            self.render()
-        else:
-            logger.error(f"andie file does not exist.")
+        for points in self.andie_data.values():
+            points.sort(key=lambda entry: entry[1]) # sort by timestamp
+
+        self.render()
 
     def poll_files(self):
         """poll the scientist cloud volume for new transition files or updates to andie files"""
         self.files = self._load_files()
         self.select_file.options = self.files
-
-        self.load_andie()
 
         # reactivity
         # pn.bind(self.update_stateful_plot, self.select_bragg_file, watch=True)
@@ -365,7 +439,7 @@ class TransitionAppState:
             return
 
         if self.current_campaign_id not in self.andie_data:
-            logger.error(f"campaign id {self.campaign_id} not found in andie data")
+            logger.error(f"campaign id {self.current_campaign_id} not found in andie data")
             return
 
         andie_data = self.andie_data[self.current_campaign_id]
@@ -502,60 +576,9 @@ class TransitionAppState:
             self.play_pause_button.name = "▶️"
             self.play_pause_button.button_type = "success"
 
-def get_resource():
-    session = boto3.Session(aws_access_key_id = os.getenv("AWS_ACCESS_KEY_ID"),
-                                    aws_secret_access_key = os.getenv("AWS_SECRET_ACCESS_KEY"),
-                                    region_name=os.getenv("AWS_REGION_NAME"))
-    s3 = session.resource("s3",
-                                endpoint_url='https://us-east-1.gw.future-tech-holdings.com',
-                                config=Config(signature_version="s3v4"))
-    return s3
-
-def download_file(bucket_name: str, obj_name: str, file_path: str):
-    s3 = get_resource()
-    bucket = s3.Bucket(bucket_name)
-    bucket.download_file(obj_name, file_path)
-    return "Success"
-
-def load_data_from_cloud_parallel(target_dir: str, bucket_name: str, cloud_dir: str):
-    with ProcessPoolExecutor() as executor:
-        if cloud_dir[-1] != "/":
-            cloud_dir += "/"
-
-        future_to_key = {}
-
-        s3 = get_resource()
-        bucket = s3.Bucket(bucket_name)
-
-        bragg_files = bucket.objects.filter(Prefix = cloud_dir+"bragg/")
-        transition_files = bucket.objects.filter(Prefix = cloud_dir+"transition/")
-
-        future = executor.submit(download_file, bucket_name, cloud_dir+"nexttemp/andie.txt", os.path.join(target_dir, "andie.txt"))
-        future_to_key[future] = cloud_dir+"nexttemp/andie.txt"
-
-        for file_summary in bragg_files:
-            object_name = file_summary.key
-            file_name = object_name.split("/")[-1]
-            future = executor.submit(download_file, bucket_name, object_name, os.path.join(target_dir, file_name))
-            future_to_key[future] = object_name
-
-        for file_summary in transition_files:
-            object_name = file_summary.key
-            file_name = object_name.split("/")[-1]
-            future = executor.submit(download_file, bucket_name, object_name, os.path.join(target_dir, file_name))
-            future_to_key[future] = object_name
-
-        for future in futures.as_completed(future_to_key):
-            key = future_to_key[future]
-            exception = future.exception()
-
-            if not exception:
-                yield key, future.result()
-            else:
-                yield key, exception
-
 def App() -> MaterialTemplate:
     pn.extension("plotly")
+    pn.extension("modal")
     config = defaultdict()
     load_dotenv()
 
@@ -569,35 +592,17 @@ def App() -> MaterialTemplate:
 
     logger.info("initialized replay dashboard configuration")
 
-    data_folder = config['volumes']['scientist_cloud_volume']
+    session = boto3.Session(aws_access_key_id = os.getenv("AWS_ACCESS_KEY_ID"),
+                                    aws_secret_access_key = os.getenv("AWS_SECRET_ACCESS_KEY"),
+                                    region_name=os.getenv("AWS_REGION_NAME"))
+    s3 = session.resource("s3",
+                                endpoint_url='https://us-east-1.gw.future-tech-holdings.com',
+                                config=Config(signature_version="s3v4"))
 
-    if not os.path.isdir(data_folder):
-        logger.error(f"could to initialize replay dashboard, data volume path {data_folder} does not exists: {e}")
-        raise FileNotFoundError(f"could to initialize replay dashboard, data volume path {data_folder} does not exists: {e}")
+    file_provider = FileProvider(config, s3)
 
-    for file in os.listdir(data_folder):
-        os.remove(os.path.join(data_folder, file))
-
-    if config["data"]["use_test_data"]:
-        test_folder = config['volumes']['test_data_volume']
-        if not os.path.isdir(test_folder):
-            logger.error(f"could to initialize replay dashboard, test data volume path {test_folder} does not exists: {e}")
-            raise FileNotFoundError(f"could to initialize replay dashboard, test data volume path {test_folder} does not exists: {e}")
-
-        for test_file in os.listdir(test_folder):
-            shutil.copy(os.path.join(test_folder, test_file), data_folder)
-    else:
-        try:
-            for key, result in load_data_from_cloud_parallel(data_folder,
-                                config["scientist_cloud"]["bucket"],
-                                config["scientist_cloud"]["path"]):
-                logger.error(f"download {key}: {result}")
-        except Exception as e:
-            logger.error(f"could not initialize replay dashboard, failed to retrieve scientist cloud data: {e}")
-            raise FileNotFoundError(f"could not initialize replay dashboard, failed to retrieve scientist cloud data: {e}")
-
-    bragg_state = BraggAppState(config)
-    transition_state = TransitionAppState(config)
+    bragg_state = BraggAppState(config, file_provider)
+    transition_state = TransitionAppState(config, file_provider)
 
     transition_time_controls = pn.Row(
         transition_state.time_scale_slider,
@@ -645,11 +650,10 @@ def App() -> MaterialTemplate:
         styles={"padding_bottom": "100px"}
     )
 
-
     page = pn.template.MaterialTemplate(
         title="NSDF INTERSECT REPLAY",
         header=[],
-        main=[main],
+        main=[pn.Column(main, file_provider.modal)],
         sidebar=[],
         header_background="#00662c",
         busy_indicator=None
@@ -681,15 +685,13 @@ def App() -> MaterialTemplate:
     pn.bind(transition_state.jump_to_point, transition_state.select_point, watch=True)
     pn.bind(lambda _: transition_state.toggle_play_pause(), transition_state.play_pause_button, watch=True)
 
-    page.serveable()
-
-    
+    page.servable()
 
     return page
 
 
 if __name__.startswith("bokeh"):
-    try:
+    # try:
         app = App()
-    except Exception as e:
-        logger.error(f"dashboard could not be initialized {e}")
+    # except Exception as e:
+    #     logger.error(f"dashboard could not be initialized {e}")

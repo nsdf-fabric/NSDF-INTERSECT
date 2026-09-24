@@ -4,8 +4,6 @@ __pycache__
 .python-version
 *.tgz
 Chart.lock
-uv.lock
-pyproject.toml
 .env
 
 # Do not store volume mounts
