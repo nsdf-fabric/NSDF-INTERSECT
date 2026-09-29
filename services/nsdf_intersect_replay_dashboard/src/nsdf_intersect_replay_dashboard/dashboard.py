@@ -230,7 +230,7 @@ class TransitionAppState:
             layout=go.Layout(
                 xaxis=dict(title=dict(text="Temperature (K)", font=dict(size=22)), tickfont=dict(size=18)),
                 yaxis=dict(title=dict(text="d-Spacing", font=dict(size=22)), tickfont=dict(size=18)),
-                legend=dict(font=dict(size=16))
+                legend=dict(font=dict(size=16), y=1.2, orientation='h')
             ),
         )
 
@@ -668,7 +668,7 @@ def App() -> MaterialTemplate:
     )
 
     page = pn.template.MaterialTemplate(
-        title="NSDF INTERSECT REPLAY",
+        title="NSDF INTERSECT NEUTRON DASHBOARD",
         header=[],
         main=[pn.Column(main, file_provider.modal)],
         sidebar=[],
