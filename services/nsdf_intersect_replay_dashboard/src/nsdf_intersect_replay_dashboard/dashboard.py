@@ -297,9 +297,12 @@ class TransitionAppState:
 
     def load_file(self, selection_name: str):
         """load a transition file"""
+
         if selection_name == "":
             self.render(force=True)
             return
+
+        self.pause()
 
         campaign_id = selection_name.split(" ")[0]
 
@@ -321,7 +324,9 @@ class TransitionAppState:
                 self.point_options.append(point_id)
 
         self.select_point.options = self.point_options
-        self.t = 0
+        duration, _ = self.calculate_duration()
+        self.t = duration
+        self.update_time_slider()
 
         logger.info(f"loaded transition file: {filename}")
 
@@ -364,15 +369,19 @@ class TransitionAppState:
 
         andie_data = self.andie_data[self.current_campaign_id]
 
-        if len(andie_data) <= 1:
+        if len(andie_data) == 0:
             return 0, -1
 
-        if len(andie_data) != len(self.file_data):
+        if len(andie_data) < len(self.file_data):
             return 0, -1
-        
+
+        if len(self.file_data) == 1:
+            return 0, float(andie_data[0][1])
+
+        file_len = len(self.file_data)
         start_t = float(andie_data[0][1])
-        andie_end_t = float(andie_data[-1][1])
-        last_delay = andie_end_t - float(andie_data[-2][1])
+        andie_end_t = float(andie_data[file_len-1][1])
+        last_delay = andie_end_t - float(andie_data[file_len-2][1])
         end_t = andie_end_t + last_delay
 
         return end_t - start_t, start_t
@@ -384,6 +393,7 @@ class TransitionAppState:
         max_y = 0.0
 
         x_list = [] # list of temperatures
+
 
         if max_transition_index >= 0:
             for i in range(max_transition_index + 1):
@@ -411,7 +421,8 @@ class TransitionAppState:
                 )
 
         if next_temperature is not None:
-            traces.append(
+            traces.insert(
+                0,
                 go.Scatter(
                     mode="lines",
                     x=[next_temperature, next_temperature],
@@ -447,8 +458,8 @@ class TransitionAppState:
             logger.error(f"andie data for campaign id {self.current_campaign_id} is empty")
             return
 
-        if len(andie_data) != len(self.file_data):
-            logger.error(f"andie data length {len(andie_data)} does not match transition data length {len(self.file_data)} for campaign id {self.current_campaign_id}")
+        if len(andie_data) < len(self.file_data):
+            logger.error(f"andie data length {len(andie_data)} is shorter than transition data length {len(self.file_data)} for campaign id {self.current_campaign_id}")
             return
 
         duration, start_t = self.calculate_duration()
@@ -457,7 +468,7 @@ class TransitionAppState:
         next_temperature = None
         andie_index = -1
 
-        for i in range(len(andie_data)):
+        for i in range(len(self.file_data)):
             entry = andie_data[i]
             if float(entry[1]) <= self.t + andie_offset:
                 next_temperature = float(entry[2])
@@ -570,6 +581,12 @@ class TransitionAppState:
     def toggle_play_pause(self):
         self.playing = not self.playing
         if self.playing:
+            duration, _ = self.calculate_duration()
+            
+            if (duration - self.t < 0.01):
+                self.t = 0
+                self.update_time_slider()
+
             self.play_pause_button.name = "⏸️"
             self.play_pause_button.button_type = "warning"
         else:
