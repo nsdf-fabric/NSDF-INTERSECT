@@ -6,13 +6,15 @@ Description: The UI/visualization component for monitoring experiments.
 """
 
 import os
-import shutil
 import logging
-from typing import List, DefaultDict
+from typing import DefaultDict
 from collections import defaultdict
 import panel as pn
 from panel.template import MaterialTemplate
 import plotly.graph_objects as go
+
+pn.extension("modal", "plotly")
+
 from datetime import datetime, timezone
 import numpy as np
 import yaml
@@ -20,10 +22,6 @@ from gsa_loader import load_gsa_file
 import boto3
 from dotenv import load_dotenv
 from botocore.client import Config
-from concurrent import futures
-from concurrent.futures import ProcessPoolExecutor
-import uuid
-import hashlib
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -199,7 +197,7 @@ class BraggAppState:
         else:
             self.data_dict["data"] = [self.bragg_data_by_bank[bank_id]]
 
-        self.data_plot.object = self.data_dict
+        self.data_plot.object = dict(self.data_dict)
 
     def poll_files(self):
         """poll the scientist cloud volume for new bragg files"""
@@ -231,7 +229,7 @@ class TransitionAppState:
                 xaxis=dict(title=dict(text="Temperature (K)", font=dict(size=22)), tickfont=dict(size=18)),
                 yaxis=dict(title=dict(text="d-Spacing", font=dict(size=22)), tickfont=dict(size=18)),
                 legend=dict(font=dict(size=16), y=1.2, orientation='h')
-            ),
+            )
         )
 
         self.select_file = pn.widgets.AutocompleteInput(
@@ -415,7 +413,7 @@ class TransitionAppState:
                         x=x_list,
                         y=y_list, 
                         name=f"Peak {peak+1}",
-                        marker=dict(size=np.linspace(5, 35, len(self.file_data))),
+                        marker=dict(size=np.linspace(5, 35, len(x_list))),
                         line=dict(width=1),
                     )
                 )
@@ -439,6 +437,7 @@ class TransitionAppState:
         self.time_slider.start = 0.0
         self.time_slider.end = max(duration, 0.1)
         self.t = min(self.t, duration)
+
         self._program_changed_value = True
         self.time_slider.value = self.t
         self._program_changed_value = False
@@ -490,7 +489,7 @@ class TransitionAppState:
         self.last_transition_index = transition_index
 
         self.data_dict["data"] = self.generate_transition_plot(transition_index, next_temperature)
-        self.data_plot.object = self.data_dict
+        self.data_plot.object = dict(self.data_dict)
 
         if transition_index >= 0:
             self._program_changed_value = True
@@ -594,8 +593,6 @@ class TransitionAppState:
             self.play_pause_button.button_type = "success"
 
 def App() -> MaterialTemplate:
-    pn.extension("plotly")
-    pn.extension("modal")
     config = defaultdict()
     load_dotenv()
 
@@ -650,7 +647,8 @@ def App() -> MaterialTemplate:
         pn.pane.Markdown("<h1>Bragg Data</h1>"),
         bragg_state.select_file,
         bragg_state.select_bank,
-        bragg_state.data_plot
+        bragg_state.data_plot,
+        styles={"pointer-events": "none"}
     )
     
     transition_data = pn.Column(
@@ -658,8 +656,16 @@ def App() -> MaterialTemplate:
         pn.Row(transition_state.select_file, transition_state.select_point),
         transition_state.next_temperature_md,
         transition_state.data_plot,
-        transition_bottom_bar
+        styles={"pointer-events": "none"}
     )
+
+    bragg_state.select_bank.styles={"pointer-events": "auto"}
+    bragg_state.select_file.styles={"pointer-events": "auto"}
+    bragg_state.data_plot.styles={"pointer-events": "auto"}
+
+    transition_state.select_file.styles={"pointer-events": "auto"}
+    transition_state.select_point.styles={"pointer-events": "auto"}
+    transition_state.data_plot.styles={"pointer-events": "auto"}
 
     main = pn.Row(
         bragg_data,
@@ -670,7 +676,7 @@ def App() -> MaterialTemplate:
     page = pn.template.MaterialTemplate(
         title="NSDF INTERSECT NEUTRON DASHBOARD",
         header=[],
-        main=[pn.Column(main, file_provider.modal)],
+        main=[pn.Column(main, file_provider.modal, transition_bottom_bar)],
         sidebar=[],
         header_background="#00662c",
         busy_indicator=None
