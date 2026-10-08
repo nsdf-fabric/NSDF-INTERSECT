@@ -43,6 +43,7 @@ services:
       - intersect_transition_volume:/app/transition_volume/
       - intersect_andie_volume:/app/andie_volume/
       - intersect_scientist_cloud_volume:/app/scientist_cloud_volume
+
   dashboard_service:
     image: "ghcr.io/nsdf-fabric/intersect-service:latest"
     container_name: dashboard_service
