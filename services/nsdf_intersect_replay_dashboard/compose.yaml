@@ -1,6 +1,6 @@
 services:
   replay_dashboard:
-    image: "intersect-replay-dashboard:latest"
+    image: ghcr.io/nsdf-fabric/neutron-diffraction-dashboard:main
     container_name: replay_dashboard
     env_file:
       - ".env"
