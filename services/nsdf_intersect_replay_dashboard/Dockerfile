@@ -59,6 +59,4 @@ ENV BOKEH_ALLOW_WS_ORIGIN="*"
 
 COPY --from=build /app ./
 
-EXPOSE 10042
-
-CMD ["panel", "serve", "/app/src/nsdf_intersect_replay_dashboard/dashboard.py", "--address", "0.0.0.0", "--allow-websocket-origin", "*", "--port", "10041"]
+CMD ["panel", "serve", "/app/src/nsdf_intersect_replay_dashboard/dashboard.py"]

@@ -5,11 +5,9 @@ services:
     env_file:
       - ".env"
     ports:
-      - "10041:10041"
-    environment:
-      BOKEH_ALLOW_WS_ORIGIN: "*"
+      - "127.0.0.1:8080:8080"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:10041/"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/"]
       interval: 10s
       retries: 5
       start_period: 10s
