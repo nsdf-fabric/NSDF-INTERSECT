@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"dagger/nsdf-intersect-ci/internal/dagger"
+
+	"dagger.io/dagger/dag"
 )
 
 type NsdfIntersectCi struct{}
@@ -69,6 +71,8 @@ func (m *NsdfIntersectCi) PublishImage(ctx context.Context, name string,
 			container = m.BuildFromDockerfile(source.Directory("nsdf_intersect_service"), version, sha)
 		case "intersect-storage":
 			container = m.BuildFromDockerfile(source.Directory("ndsf_intersect_storage"), version, sha)
+		case "neutron-diffraction-dashboard":
+			container = m.BuildFromDockerfile(source.Directory("nsdf_intersect_replay_dashboard"), version, sha)
 		}
 
 		imageName := fmt.Sprintf("%s/%s/%s:%s", registry, username, name, version)

@@ -1,0 +1,29 @@
+name: Publish Replay Dashboard to GHCR
+
+on:
+  push:
+    tags:
+      - "**"
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    env:
+      IMAGE_NAME: neutron-diffraction-dashboard
+      USERNAME: ${{github.repository_owner}}
+      PASSWORD: ${{secrets.GITHUB_TOKEN}}
+      IMAGE_TAGS: uv,${{github.sha}},${{github.ref_name}}
+      SHA: ${{github.sha}}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - uses: dagger/dagger-for-github@8.0.0
+
+      - name: Publish Replay Dashboard Docker image to ghcr
+        run: |
+          dagger call publish-image --registry=ghcr.io --name=$IMAGE_NAME --versions=$IMAGE_TAGS --sha=$SHA --username=$USERNAME --password=env:PASSWORD
