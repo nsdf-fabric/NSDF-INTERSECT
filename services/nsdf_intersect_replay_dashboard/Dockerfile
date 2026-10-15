@@ -59,4 +59,4 @@ ENV BOKEH_ALLOW_WS_ORIGIN="*"
 
 COPY --from=build /app ./
 
-CMD ["panel", "serve", "/app/src/nsdf_intersect_replay_dashboard/dashboard.py"]
+CMD ["panel", "serve", "/app/src/nsdf_intersect_replay_dashboard/neutron-diffraction.py"]
