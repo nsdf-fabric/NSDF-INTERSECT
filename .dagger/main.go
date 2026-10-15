@@ -9,7 +9,6 @@ import (
 
 	"dagger/nsdf-intersect-ci/internal/dagger"
 
-	"dagger.io/dagger/dag"
 )
 
 type NsdfIntersectCi struct{}
