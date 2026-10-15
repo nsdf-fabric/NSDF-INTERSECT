@@ -1,0 +1,9 @@
+delays:
+  file_polling_delay: 1
+  time_update_delay: 0.1
+volumes:
+  scientist_cloud_volume: "/scientist_cloud_volume"
+scientist_cloud:
+  bucket: scientistcloud
+  path: rec/ornl/intersect/
+  andie_name: andie_processed.txt

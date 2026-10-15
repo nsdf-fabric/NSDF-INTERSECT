@@ -1,0 +1,22 @@
+services:
+  replay_dashboard:
+    image: "intersect-replay-dashboard:latest"
+    container_name: replay_dashboard
+    env_file:
+      - ".env"
+    ports:
+      - "10041:10041"
+    environment:
+      BOKEH_ALLOW_WS_ORIGIN: "*"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:10041/"]
+      interval: 10s
+      retries: 5
+      start_period: 10s
+      timeout: 10s
+    volumes:
+      - ./src/nsdf_intersect_replay_dashboard/config_dashboard.yaml:/app/config/config_dashboard_default.yaml
+      - intersect_scientist_cloud_volume:/app/scientist_cloud_volume
+
+volumes:
+  intersect_scientist_cloud_volume:

@@ -14,6 +14,10 @@ all:
 dashboard:
 	@docker build -t intersect-dashboard services/nsdf_intersect_dashboard
 
+.PHONY: replay
+replay:
+	@docker build -t intersect-replay-dashboard services/nsdf_intersect_replay_dashboard
+
 .PHONY: service
 service:
 	@docker build -t intersect-service services/nsdf_intersect_service

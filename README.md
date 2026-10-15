@@ -43,7 +43,7 @@ To get started, you can build and launch all the services with the following com
 make all
 ```
 
-Then, you can visualize the dashboard at `http://localhost:10042`.
+Then, you can visualize the dashboard for viewing live data at `http://localhost:10042`. If you wish to replay old experiments, go to the replay dashboard at `http://localhost:10041`.
 
 Lastly, simulate networking of the service and dashboard with the following command:
 
@@ -77,6 +77,34 @@ To run the Docker container for the dashboard, execute the following:
 
 ```bash
 docker run --rm -p 10042:10042 intersect-dashboard
+```
+
+## 🔴 Replay Dashboard
+
+The replay dashboard is the visualization component for past experiments.
+
+### 🐳 Docker
+
+#### Building the dashboard image
+
+To build the Docker image for the replay dashboard, run the following:
+
+```bash
+make replay
+```
+
+#### Running the dashboard container
+
+To run the Docker container for the replay dashboard, execute the following:
+
+```bash
+docker compose -f /services/nsdf_intersect_replay_dashboard/compose.yaml up -d
+```
+
+To kill the dashboard process, run
+
+```bash
+docker compose -f /services/nsdf_intersect_replay_dashboard/compose.yaml down
 ```
 
 ## 🖥️ Dashboard service
